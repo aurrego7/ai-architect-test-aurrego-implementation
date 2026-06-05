@@ -1,3 +1,10 @@
+# Internal documents — do not share with candidates
+BUGS_INTERNAL.md
+FEEDBACK.md
+INTERVIEW_QUESTIONS.md
+CV_GERMAN_SANCHEZ_GenAI.pdf
+JD.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
