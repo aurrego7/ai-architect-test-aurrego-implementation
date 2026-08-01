@@ -40,9 +40,7 @@ class TestOOPDesign:
 
         for filepath in service_files:
             tree = parse_module(filepath)
-            has_class = any(
-                isinstance(node, ast.ClassDef) for node in ast.walk(tree)
-            )
+            has_class = any(isinstance(node, ast.ClassDef) for node in ast.walk(tree))
             if has_class:
                 files_with_classes.append(os.path.basename(filepath))
 
@@ -65,9 +63,7 @@ class TestOOPDesign:
                 if isinstance(node, ast.FunctionDef)
             ]
             if top_level_funcs:
-                violating_files.append(
-                    (os.path.basename(filepath), top_level_funcs)
-                )
+                violating_files.append((os.path.basename(filepath), top_level_funcs))
 
         assert len(violating_files) == 0, (
             f"Service files with bare module-level functions: "
@@ -119,9 +115,7 @@ class TestAbstractions:
 
         tree = parse_module(filepath)
         class_names = [
-            node.name
-            for node in ast.walk(tree)
-            if isinstance(node, ast.ClassDef)
+            node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
         ]
 
         assert len(class_names) >= 1, (
@@ -140,9 +134,7 @@ class TestAbstractions:
 
         tree = parse_module(filepath)
         class_names = [
-            node.name
-            for node in ast.walk(tree)
-            if isinstance(node, ast.ClassDef)
+            node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
         ]
 
         assert len(class_names) >= 1, (
@@ -158,9 +150,7 @@ class TestAbstractions:
         filepath = os.path.join(SERVICES_DIR, "ocr_service.py")
         tree = parse_module(filepath)
         class_names = [
-            node.name
-            for node in ast.walk(tree)
-            if isinstance(node, ast.ClassDef)
+            node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
         ]
 
         assert len(class_names) >= 1, (
@@ -197,7 +187,11 @@ class TestDependencyInjection:
                         for constructor in model_constructors:
                             if constructor in func_source:
                                 violations.append(
-                                    (os.path.basename(filepath), node.name, constructor.rstrip("("))
+                                    (
+                                        os.path.basename(filepath),
+                                        node.name,
+                                        constructor.rstrip("("),
+                                    )
                                 )
 
         assert len(violations) == 0, (
@@ -216,12 +210,9 @@ class TestDependencyInjection:
 
             for node in ast.iter_child_nodes(tree):
                 if isinstance(node, ast.Assign):
-                    source = ast.get_source_segment(
-                        open(filepath).read(), node
-                    )
+                    source = ast.get_source_segment(open(filepath).read(), node)
                     if source and any(
-                        kw in source
-                        for kw in ["QdrantClient(", "spacy.load("]
+                        kw in source for kw in ["QdrantClient(", "spacy.load("]
                     ):
                         violations.append(os.path.basename(filepath))
 

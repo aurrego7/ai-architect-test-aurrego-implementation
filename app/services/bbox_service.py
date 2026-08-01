@@ -25,13 +25,15 @@ def find_name_bounding_boxes(pdf_path: str, text: str) -> list[dict]:
             max_x = max(b["x"] + b["width"] for b in matched_boxes)
             max_y = max(b["y"] + b["height"] for b in matched_boxes)
 
-            name_boxes.append({
-                "name": name,
-                "page": matched_boxes[0]["page"],
-                "x": min_x,
-                "y": min_y,
-                "width": max_x - min_x,
-                "height": max_y - min_y,
-            })
+            name_boxes.append(
+                {
+                    "name": name,
+                    "page": matched_boxes[0]["page"],
+                    "x": min_x,
+                    "y": min_y,
+                    "width": max_x - min_x,
+                    "height": max_y - min_y,
+                }
+            )
 
     return name_boxes

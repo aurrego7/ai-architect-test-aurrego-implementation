@@ -79,9 +79,7 @@ class TestGenerateAnswer:
                 "app.services.rag_service.get_query_embedding",
                 return_value=[0.1] * 384,
             ),
-            patch(
-                "app.services.rag_service.search_similar", return_value=mock_chunks
-            ),
+            patch("app.services.rag_service.search_similar", return_value=mock_chunks),
             patch("app.services.rag_service.httpx.post", side_effect=mock_post),
             patch("app.services.rag_service.OPENAI_API_KEY", "test-key"),
         ):

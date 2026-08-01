@@ -23,11 +23,13 @@ def extract_names_with_positions(text: str) -> list[dict]:
     results = []
     for ent in doc.ents:
         if ent.label_ in ("PERSON", "ORG"):
-            results.append({
-                "name": ent.text,
-                "start_char": ent.start_char,
-                "end_char": ent.end_char,
-                "label": ent.label_,
-            })
+            results.append(
+                {
+                    "name": ent.text,
+                    "start_char": ent.start_char,
+                    "end_char": ent.end_char,
+                    "label": ent.label_,
+                }
+            )
 
     return results

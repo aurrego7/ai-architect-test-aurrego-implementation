@@ -31,52 +31,54 @@ class TestExtractEndpoint:
         Fuzzy match results are computed but silently dropped.
         """
         mock_name_boxes = [
-            {"name": "John Smith", "page": 0, "x": 100, "y": 50, "width": 90, "height": 12}
+            {
+                "name": "John Smith",
+                "page": 0,
+                "x": 100,
+                "y": 50,
+                "width": 90,
+                "height": 12,
+            }
         ]
         mock_matches = [
             {"extracted_name": "John Smith", "matched_name": "John Smith", "score": 1.0}
         ]
 
         with (
-            patch(
-                "app.api.extract.extract_text_from_pdf", return_value="John Smith"
-            ),
+            patch("app.api.extract.extract_text_from_pdf", return_value="John Smith"),
             patch(
                 "app.api.extract.find_name_bounding_boxes",
                 return_value=mock_name_boxes,
             ),
-            patch(
-                "app.api.extract.fuzzy_match_names", return_value=mock_matches
-            ),
+            patch("app.api.extract.fuzzy_match_names", return_value=mock_matches),
         ):
             response = app_client.post(
                 "/api/extract",
-                files={
-                    "pdf_file": ("test.pdf", b"%PDF-1.4 fake", "application/pdf")
-                },
+                files={"pdf_file": ("test.pdf", b"%PDF-1.4 fake", "application/pdf")},
                 data={
-                    "names": json.dumps(
-                        [{"first_name": "John", "last_name": "Smith"}]
-                    )
+                    "names": json.dumps([{"first_name": "John", "last_name": "Smith"}])
                 },
             )
 
         data = response.json()
-        assert "fuzzy_matches" in data, (
-            "Response should include fuzzy_matches field"
-        )
+        assert "fuzzy_matches" in data, "Response should include fuzzy_matches field"
         assert len(data["fuzzy_matches"]) == 1
 
     def test_response_includes_page_number(self, app_client):
         """FAILS: Bug — BoundingBox schema missing page_number field."""
         mock_name_boxes = [
-            {"name": "John Smith", "page": 0, "x": 100, "y": 50, "width": 90, "height": 12}
+            {
+                "name": "John Smith",
+                "page": 0,
+                "x": 100,
+                "y": 50,
+                "width": 90,
+                "height": 12,
+            }
         ]
 
         with (
-            patch(
-                "app.api.extract.extract_text_from_pdf", return_value="John Smith"
-            ),
+            patch("app.api.extract.extract_text_from_pdf", return_value="John Smith"),
             patch(
                 "app.api.extract.find_name_bounding_boxes",
                 return_value=mock_name_boxes,
@@ -85,9 +87,7 @@ class TestExtractEndpoint:
         ):
             response = app_client.post(
                 "/api/extract",
-                files={
-                    "pdf_file": ("test.pdf", b"%PDF-1.4 fake", "application/pdf")
-                },
+                files={"pdf_file": ("test.pdf", b"%PDF-1.4 fake", "application/pdf")},
                 data={"names": json.dumps([])},
             )
 

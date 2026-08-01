@@ -25,10 +25,12 @@ def fuzzy_match_names(
                 best_match = extracted
 
         if best_score >= SIMILARITY_THRESHOLD:
-            matches.append({
-                "extracted_name": best_match,
-                "matched_name": query_full,
-                "score": best_score / 100.0,
-            })
+            matches.append(
+                {
+                    "extracted_name": best_match,
+                    "matched_name": query_full,
+                    "score": best_score / 100.0,
+                }
+            )
 
     return matches

@@ -65,10 +65,16 @@ class TestStoreDocumentChunks:
 
         # Extract point IDs from both calls
         first_ids = [
-            p.id for p in first_call_points.kwargs.get("points", first_call_points[1].get("points", []))
+            p.id
+            for p in first_call_points.kwargs.get(
+                "points", first_call_points[1].get("points", [])
+            )
         ]
         second_ids = [
-            p.id for p in second_call_points.kwargs.get("points", second_call_points[1].get("points", []))
+            p.id
+            for p in second_call_points.kwargs.get(
+                "points", second_call_points[1].get("points", [])
+            )
         ]
 
         # IDs should NOT overlap

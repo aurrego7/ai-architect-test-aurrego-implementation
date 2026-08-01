@@ -36,13 +36,15 @@ def get_word_bounding_boxes(pdf_path: str) -> list[dict]:
             if not word:
                 continue
 
-            results.append({
-                "word": word,
-                "page": page_num,
-                "x": ocr_data["left"][i],
-                "y": ocr_data["top"][i],
-                "width": ocr_data["width"][i],
-                "height": ocr_data["height"][i],
-            })
+            results.append(
+                {
+                    "word": word,
+                    "page": page_num,
+                    "x": ocr_data["left"][i],
+                    "y": ocr_data["top"][i],
+                    "width": ocr_data["width"][i],
+                    "height": ocr_data["height"][i],
+                }
+            )
 
     return results
