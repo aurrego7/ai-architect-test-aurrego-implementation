@@ -123,6 +123,8 @@ As part of your submission, fill in the tables below documenting every bug you f
 | 7 | bbox_service.py | No case-insensitive matching | Added .casefold() to both words and name_parts |
 | 8 | bbox_service.py | Only initial match allowed | Inverted iteration to be first on words and then on names to be able to find multiple ocurrences of the same name. Also improved effiency by gating the window in which the secondary parts of the name are looked for |
 | 9 | test_bbox.py | Missing assertion for completeness | Added assertions for secondary match and check page on secondary match |
+| 10 | fuzzy_service.py | Incorrect variable value | Changed `SIMILARITY_THRESHOLD` value from 70 to 90 |
+| 11 | fuzzy_service.py | Incorrect fuzz ratio function | Changed `partial_ratio` to `ratio` to prevent substring matches to map to 100% |
 
 (add more rows as needed)
 

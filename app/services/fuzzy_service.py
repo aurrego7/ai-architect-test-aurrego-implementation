@@ -1,7 +1,6 @@
 from thefuzz import fuzz
 
-
-SIMILARITY_THRESHOLD = 70
+SIMILARITY_THRESHOLD = 90
 
 
 def fuzzy_match_names(
@@ -18,7 +17,7 @@ def fuzzy_match_names(
         best_score = 0
 
         for extracted in extracted_names:
-            score = fuzz.partial_ratio(query_full, extracted)
+            score = fuzz.ratio(query_full, extracted)
 
             if score > best_score:
                 best_score = score
