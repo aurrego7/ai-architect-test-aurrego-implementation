@@ -36,3 +36,4 @@ class RAGRequest(BaseModel):
 
 class RAGResponse(BaseModel):
     answer: str
+    sources: list[str]

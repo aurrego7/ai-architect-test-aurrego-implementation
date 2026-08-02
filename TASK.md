@@ -131,9 +131,8 @@ As part of your submission, fill in the tables below documenting every bug you f
 | 15 | rag_service.py | Incorrect interpolation due to double set of brackets | Remove extra set of brackets to allow proper string interpolation |
 | 16 | extract.py | No file type check on uploaded file | Added a cheap and expensive file type check for early exit |
 | 17 | extract.py | Import library inside of functions | Remove library import mid function and add to top level imports |
-| 18 | extract.py | Create file in variable | Create tempfile with context manager to prevent leakage |
 | 19 | extract.py | Missing values in response dictionary | Add page_number key-value pair to bounding_box dict |
-| 20 | schemas.py | Missing values in schema structures | Add mising fuzzy_matches field to `ExtractionResponse` and page_number field to `BoundingBox` |
+| 20 | schemas.py | Missing values in schema structures | Add mising fuzzy_matches field to `ExtractionResponse`, page_number field to `BoundingBox`, and sources to `RAGResponse` |
 
 (add more rows as needed)
 
@@ -141,7 +140,7 @@ As part of your submission, fill in the tables below documenting every bug you f
 
 | # | What You Changed | Why |
 |---|------------------|-----|
-| 1 |                  |     |
+| 1 | Reading/creating files without a context manager | In order to prevent data leakage whenever the file is not closed or if executions on the file fail the context manager will automatically handle the teardown |
 | 2 |                  |     |
 | 3 |                  |     |
 

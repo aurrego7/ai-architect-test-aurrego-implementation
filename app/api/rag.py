@@ -1,5 +1,5 @@
-import tempfile
 import os
+import tempfile
 
 from fastapi import APIRouter, File, UploadFile
 
@@ -14,9 +14,9 @@ router = APIRouter()
 @router.post("/ingest")
 def ingest_pdf(pdf_file: UploadFile = File(...)):
     """Ingest a PDF document into the vector database."""
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    tmp.write(pdf_file.file.read())
-    tmp.close()
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        tmp.write(pdf_file.file.read())
+        tmp.close()
 
     try:
         init_collection()
