@@ -4,8 +4,9 @@ These tests verify name-to-bounding-box matching.
 Some tests will FAIL due to bugs in the current implementation.
 """
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 
 class TestFindNameBoundingBoxes:
@@ -84,3 +85,5 @@ class TestFindNameBoundingBoxes:
         # This test documents the bug — candidate should decide if
         # returning all occurrences is the correct behavior.
         assert result[0]["page"] == 0
+        assert result[1]["page"] == 1
+        assert len(result) == 2
