@@ -6,6 +6,7 @@ class BoundingBox(BaseModel):
     y: float
     width: float
     height: float
+    page_number: int
 
 
 class ExtractedName(BaseModel):
@@ -21,6 +22,7 @@ class FuzzyMatch(BaseModel):
 
 class ExtractionResponse(BaseModel):
     extracted_names: list[ExtractedName]
+    fuzzy_matches: list[FuzzyMatch]
 
 
 class NamePair(BaseModel):

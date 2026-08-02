@@ -126,9 +126,14 @@ As part of your submission, fill in the tables below documenting every bug you f
 | 10 | fuzzy_service.py | Incorrect variable value | Changed `SIMILARITY_THRESHOLD` value from 70 to 90 |
 | 11 | fuzzy_service.py | Incorrect fuzz ratio function | Changed `partial_ratio` to `ratio` to prevent substring matches to map to 100% |
 | 12 | vector_service.py | Non unique id on PointStruct causes overwrite on upsert | Set id value to uuid |
-| 13 | test_rag.py | Incorrect assertions and validation for mid word chunking | Remove `stripped[0] == stripped[0]` from assertion since it is always true and rewrite mid word chunking check|
+| 13 | test_rag.py | Incorrect assertions and validation for mid word chunking | Remove `stripped[0] == stripped[0]` from assertion since it is always true and rewrite mid word chunking check |
 | 14 | rag_service.py | Incorrect chunking cuts words mid word | Implement check for the last whitespace in chunk to slice chunk |
 | 15 | rag_service.py | Incorrect interpolation due to double set of brackets | Remove extra set of brackets to allow proper string interpolation |
+| 16 | extract.py | No file type check on uploaded file | Added a cheap and expensive file type check for early exit |
+| 17 | extract.py | Import library inside of functions | Remove library import mid function and add to top level imports |
+| 18 | extract.py | Create file in variable | Create tempfile with context manager to prevent leakage |
+| 19 | extract.py | Missing values in response dictionary | Add page_number key-value pair to bounding_box dict |
+| 20 | schemas.py | Missing values in schema structures | Add mising fuzzy_matches field to `ExtractionResponse` and page_number field to `BoundingBox` |
 
 (add more rows as needed)
 

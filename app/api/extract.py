@@ -1,12 +1,13 @@
+import json
 import os
 import tempfile
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from app.models.schemas import ExtractionResponse
-from app.services.ocr_service import extract_text_from_pdf
 from app.services.bbox_service import find_name_bounding_boxes
 from app.services.fuzzy_service import fuzzy_match_names
+from app.services.ocr_service import extract_text_from_pdf
 
 router = APIRouter()
 
@@ -17,16 +18,29 @@ def extract_names_from_pdf(
     names: str = Form(...),
 ):
     """Extract names from PDF and perform fuzzy matching."""
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    tmp.write(pdf_file.file.read())
-    tmp.close()
+    # Easy check for proper file type before performing any operation
+    if pdf_file.content_type != "application/pdf":
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file type. File must be a PDF.",
+        )
+
+    # More expensive check in the inital files byte to check file type
+    header = pdf_file.file.read(5)
+    pdf_file.file.seek(0)
+    if header != b"%PDF-":
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. File must be a PDF."
+        )
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        tmp.write(pdf_file.file.read())
+        tmp.close()
 
     try:
         text = extract_text_from_pdf(tmp.name)
 
         name_boxes = find_name_bounding_boxes(tmp.name, text)
-
-        import json
 
         query_names = json.loads(names)
 
@@ -42,6 +56,7 @@ def extract_names_from_pdf(
                         "y": nb["y"],
                         "width": nb["width"],
                         "height": nb["height"],
+                        "page_number": nb["page"],
                     },
                 }
                 for nb in name_boxes
