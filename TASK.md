@@ -119,7 +119,7 @@ As part of your submission, fill in the tables below documenting every bug you f
 | 3 | ocr_service.py | Missing DPI transformation in `get_word_bounding_boxes` | Compute scale_x, scale_y to transform between 2 DPIs |
 | 4 | test_ocr.py | Missing assertion for completeness | Add assertion on Y coord in `test_coordinates_in_pdf_space` |
 | 5 | test_ocr.py | Mock built returned blank/new mock | Set return value to be the actual mock built |
-| 6 |      |                 |                  |
+| 6 | ner_service.py | Incorrect filter values on extracted entity labels | Set ent.lable_ to be only equal to `PERSON` and simplify for loop logic to list comprehension |
 | 7 |      |                 |                  |
 | 8 |      |                 |                  |
 
