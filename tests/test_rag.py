@@ -4,8 +4,9 @@ These tests verify the RAG pipeline.
 Some tests will FAIL due to bugs in the current implementation.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 
 class TestChunkText:
@@ -21,18 +22,15 @@ class TestChunkText:
         text = "Hello world this is a test sentence for chunking"
         chunks = chunk_text(text, chunk_size=15)
 
+        result = []
+        # For each chunk check which words are inside it
+        # If the number of the results is the same of text.split()
+        # this means that no word was split in half
         for chunk in chunks:
-            # No chunk should start or end mid-word
-            # (unless it's the very start or end of text)
-            stripped = chunk.strip()
-            if stripped:
-                assert not stripped[0].isalpha() or stripped[0] == stripped[0], (
-                    f"Chunk starts mid-word: '{chunk}'"
-                )
-                # Check that no word is split across chunks
-                words_in_chunk = stripped.split()
-                for word in words_in_chunk:
-                    assert word in text, f"Word fragment '{word}' not in original text"
+            for word in chunk.split():
+                result.append(word)
+
+        assert result == text.split()
 
     def test_preserves_all_text(self):
         """All original text should be preserved across chunks."""

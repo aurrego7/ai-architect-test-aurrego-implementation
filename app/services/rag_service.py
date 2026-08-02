@@ -1,9 +1,10 @@
 import os
+from string import whitespace
+
 import httpx
 
 from app.services.embedding_service import get_query_embedding
 from app.services.vector_service import search_similar
-
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
@@ -11,8 +12,23 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 def chunk_text(text: str, chunk_size: int = 500) -> list[str]:
     """Split text into chunks for embedding."""
     chunks = []
-    for i in range(0, len(text), chunk_size):
-        chunks.append(text[i : i + chunk_size])
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        # If the end of the chunk is after the end of the text cap to end of text
+        if end >= len(text):
+            chunks.append(text[start:])
+            break
+
+        # Find the last whitespace in the chunk
+        last_whitespace = text.rfind(" ", start, end)
+        # If found then cut the chunk to that whitespace index
+        if last_whitespace != -1:
+            end = last_whitespace + 1
+
+        chunks.append(text[start:end])
+        start = end
+
     return chunks
 
 
@@ -27,16 +43,18 @@ def generate_answer(question: str) -> dict:
 
     context = "\n\n".join([chunk["text"] for chunk in relevant_chunks])
 
-    prompt = f"""Based on the following context, answer the question.
-If the answer is not in the context, say "I don't have enough information."
+    prompt = f"""
+    Based on the following context, answer the question.
+    If the answer is not in the context, say "I don't have enough information."
 
-Context:
-{context}
+    Context:
+    {context}
 
-Question:
-{{question}}
+    Question:
+    {question}
 
-Answer:"""
+    Answer:
+    """
 
     response = httpx.post(
         "https://api.openai.com/v1/chat/completions",

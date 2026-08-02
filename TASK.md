@@ -126,6 +126,9 @@ As part of your submission, fill in the tables below documenting every bug you f
 | 10 | fuzzy_service.py | Incorrect variable value | Changed `SIMILARITY_THRESHOLD` value from 70 to 90 |
 | 11 | fuzzy_service.py | Incorrect fuzz ratio function | Changed `partial_ratio` to `ratio` to prevent substring matches to map to 100% |
 | 12 | vector_service.py | Non unique id on PointStruct causes overwrite on upsert | Set id value to uuid |
+| 13 | test_rag.py | Incorrect assertions and validation for mid word chunking | Remove `stripped[0] == stripped[0]` from assertion since it is always true and rewrite mid word chunking check|
+| 14 | rag_service.py | Incorrect chunking cuts words mid word | Implement check for the last whitespace in chunk to slice chunk |
+| 15 | rag_service.py | Incorrect interpolation due to double set of brackets | Remove extra set of brackets to allow proper string interpolation |
 
 (add more rows as needed)
 
