@@ -1,8 +1,9 @@
+import uuid
+
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import Distance, PointStruct, VectorParams
 
 from app.services.embedding_service import get_embeddings
-
 
 client = QdrantClient(host="localhost", port=6333)
 
@@ -30,14 +31,14 @@ def store_document_chunks(chunks: list[str], metadata: list[dict] = None):
     embeddings = get_embeddings(chunks)
 
     points = []
-    for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+    for i, (chunk, embedding) in enumerate(zip(chunks, embeddings, strict=False)):
         payload = {"text": chunk}
         if metadata and i < len(metadata):
             payload.update(metadata[i])
 
         points.append(
             PointStruct(
-                id=i,
+                id=str(uuid.uuid4()),
                 vector=embedding,
                 payload=payload,
             )

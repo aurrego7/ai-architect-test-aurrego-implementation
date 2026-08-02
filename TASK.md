@@ -125,6 +125,7 @@ As part of your submission, fill in the tables below documenting every bug you f
 | 9 | test_bbox.py | Missing assertion for completeness | Added assertions for secondary match and check page on secondary match |
 | 10 | fuzzy_service.py | Incorrect variable value | Changed `SIMILARITY_THRESHOLD` value from 70 to 90 |
 | 11 | fuzzy_service.py | Incorrect fuzz ratio function | Changed `partial_ratio` to `ratio` to prevent substring matches to map to 100% |
+| 12 | vector_service.py | Non unique id on PointStruct causes overwrite on upsert | Set id value to uuid |
 
 (add more rows as needed)
 
