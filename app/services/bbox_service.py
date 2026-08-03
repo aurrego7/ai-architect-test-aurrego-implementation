@@ -10,9 +10,9 @@ class BBoxService(Protocol):
 
 
 class BBoxLocator:
-    def __init__(self, ner_fn=None, word_boxes_fn=None):
-        self.ner_fn = ner_fn
-        self.word_boxes_fn = word_boxes_fn
+    def __init__(self, ner_function=None, word_boxes_function=None):
+        self.ner_function = ner_function
+        self.word_boxes_function = word_boxes_function
 
     def find_name_bounding_boxes(self, pdf_path: str, text: str) -> list[dict]:
         """Match extracted names to their bounding boxes in the PDF.
@@ -23,11 +23,11 @@ class BBoxLocator:
         """
         # Find functions to be used
         # Allows for swapping with defaults
-        ner = self.ner_fn or extract_names
-        bbox = self.word_boxes_fn or get_word_bounding_boxes
+        get_names = self.ner_function or extract_names
+        get_bounding_boxes = self.word_boxes_function or get_word_bounding_boxes
 
-        names = ner(text)
-        word_boxes = bbox(pdf_path)
+        names = get_names(text)
+        word_boxes = get_bounding_boxes(pdf_path)
         words = [
             b["word"].casefold().strip(string.punctuation) for b in word_boxes
         ]  # casefold for case-insensitive and punctuation-insensitive
