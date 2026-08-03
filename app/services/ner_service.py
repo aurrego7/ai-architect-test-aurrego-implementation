@@ -1,6 +1,9 @@
+import logging
 from typing import Protocol
 
 from app.core.providers import load_spacy_model
+
+logger = logging.getLogger(__name__)
 
 nlp = load_spacy_model()
 
@@ -19,7 +22,13 @@ class SpacyNERService:
         model = self.model or nlp
         doc = model(text)
 
-        return [ent.text for ent in doc.ents if ent.label_ == "PERSON"]
+        names = [ent.text for ent in doc.ents if ent.label_ == "PERSON"]
+        logger.debug(
+            "NER found %d PERSON entities out of %d total entities",
+            len(names),
+            len(doc.ents),
+        )
+        return names
 
     def extract_names_with_positions(self, text: str) -> list[dict]:
         """Extract person names with their character positions in text."""

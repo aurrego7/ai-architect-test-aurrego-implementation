@@ -1,8 +1,11 @@
+import logging
 import string
 from typing import Protocol
 
 from app.services.ner_service import extract_names
 from app.services.ocr_service import get_word_bounding_boxes
+
+logger = logging.getLogger(__name__)
 
 
 class BBoxService(Protocol):
@@ -96,6 +99,12 @@ class BBoxLocator:
 
             i = furthest + 1
 
+        logger.debug(
+            "Located %d name occurrences for %d unique names across %d words",
+            len(name_boxes),
+            len(names),
+            len(word_boxes),
+        )
         return name_boxes
 
 

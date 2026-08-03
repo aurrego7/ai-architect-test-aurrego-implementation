@@ -1,8 +1,11 @@
+import logging
 from typing import Protocol
 
 from thefuzz import fuzz
 
 from app.core.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 SIMILARITY_THRESHOLD = get_settings().SIMILARITY_THRESHOLD
 # Keeping this here to allow for test to patch without errors
@@ -50,6 +53,12 @@ class FuzzyMatcher:
                     }
                 )
 
+        logger.debug(
+            "Fuzzy matched %d of %d query names (threshold=%d)",
+            len(matches),
+            len(query_names),
+            self.similarity_threshold,
+        )
         return matches
 
 

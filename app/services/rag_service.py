@@ -1,3 +1,5 @@
+import logging
+import time
 from string import whitespace
 from typing import Protocol
 
@@ -7,6 +9,8 @@ from app.core.config import get_settings
 from app.core.prompts import rag_question_prompt
 from app.services.embedding_service import get_query_embedding
 from app.services.vector_service import search_similar
+
+logger = logging.getLogger(__name__)
 
 _key = get_settings().OPENAI_API_KEY
 OPENAI_API_KEY = _key.get_secret_value() if _key else None
@@ -49,9 +53,18 @@ class OpenAIRAG:
             chunks.append(text[start:end])
             start = end
 
+        logger.debug(
+            "Chunked %d chars into %d chunks (chunk_size=%d)",
+            len(text),
+            len(chunks),
+            chunk_size,
+        )
         return chunks
 
     def _call_llm(self, prompt: str) -> str:
+        model = get_settings().LLM_MODEL
+        logger.debug("Calling LLM '%s' with prompt of %d chars", model, len(prompt))
+        start = time.perf_counter()
         response = httpx.post(
             "https://api.openai.com/v1/chat/completions",
             headers={
@@ -59,7 +72,7 @@ class OpenAIRAG:
                 "Content-Type": "application/json",
             },
             json={
-                "model": get_settings().LLM_MODEL,
+                "model": model,
                 "messages": [{"role": "user", "content": prompt}],
             },
         )
@@ -67,6 +80,7 @@ class OpenAIRAG:
         result = response.json()
         answer = result["choices"][0]["message"]["content"]
 
+        logger.info("LLM call completed in %.2fs", time.perf_counter() - start)
         return answer
 
     def generate_answer(self, question: str) -> dict:
@@ -80,6 +94,7 @@ class OpenAIRAG:
         )
 
         if not relevant_chunks:
+            logger.info("No relevant chunks found, returning fallback answer")
             return {"answer": "No relevant information found.", "sources": []}
 
         context = "\n\n".join([chunk["text"] for chunk in relevant_chunks])

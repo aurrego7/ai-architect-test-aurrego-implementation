@@ -1,6 +1,9 @@
+import logging
 from typing import Protocol
 
 from app.core.providers import load_embedding_model
+
+logger = logging.getLogger(__name__)
 
 
 class EmbeddingService(Protocol):
@@ -15,6 +18,7 @@ class SentenceTransformerEmbedder:
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
         """Convert texts to vector embeddings."""
         model = self.model or load_embedding_model()
+        logger.debug("Embedding %d texts", len(texts))
         embeddings = model.encode(texts)
         return embeddings.tolist()
 

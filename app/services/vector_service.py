@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import Protocol
 
@@ -6,6 +7,8 @@ from qdrant_client.models import Distance, PointStruct, VectorParams
 from app.core.config import get_settings
 from app.core.providers import create_qdrant_client
 from app.services.embedding_service import get_embeddings
+
+logger = logging.getLogger(__name__)
 
 client = create_qdrant_client()
 
@@ -36,6 +39,7 @@ class QdrantVectorStore:
         existing = [c.name for c in collections]
 
         if self.collection not in existing:
+            logger.info("Creating collection '%s'", self.collection)
             vs_client.create_collection(
                 collection_name=self.collection,
                 vectors_config=VectorParams(
@@ -43,6 +47,8 @@ class QdrantVectorStore:
                     distance=Distance.COSINE,
                 ),
             )
+        else:
+            logger.debug("Collection '%s' already exists", self.collection)
 
     def store_document_chunks(
         self, chunks: list[str], metadata: list[dict] | None = None
@@ -66,26 +72,36 @@ class QdrantVectorStore:
             )
 
         vs_client.upsert(collection_name=self.collection, points=points)
+        logger.info("Stored %d chunks in collection '%s'", len(points), self.collection)
 
     def search_similar(
         self, query_embedding: list[float], top_k: int = 5
     ) -> list[dict]:
         """Search for similar text chunks."""
         vs_client = self.client or client
+        score_threshold = get_settings().SCORE_THRESHOLD
         results = vs_client.search(
             collection_name=self.collection,
             query_vector=query_embedding,
             limit=top_k,
-            score_threshold=get_settings().SCORE_THRESHOLD,
+            score_threshold=score_threshold,
         )
 
-        return [
+        hits = [
             {
                 "text": hit.payload["text"],
                 "score": hit.score,
             }
             for hit in results
         ]
+        logger.debug(
+            "Retrieved %d hits (top_k=%d, threshold=%.2f), scores=%s",
+            len(hits),
+            top_k,
+            score_threshold,
+            [round(hit["score"], 3) for hit in hits],
+        )
+        return hits
 
 
 _default_vector_store = QdrantVectorStore()
