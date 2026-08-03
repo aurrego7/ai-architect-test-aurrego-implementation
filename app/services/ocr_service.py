@@ -1,3 +1,5 @@
+"""OCR over scanned PDFs."""
+
 import io
 import logging
 import time
@@ -14,21 +16,50 @@ logger = logging.getLogger(__name__)
 
 
 class OCRService(Protocol):
-    def extract_text_from_pdf(self, pdf_path: str) -> str: ...
-    def get_word_bounding_boxes(self, pdf_path: str) -> list[dict]: ...
+    """Interface for reading text and word geometry out of a PDF."""
+
+    def extract_text_from_pdf(self, pdf_path: str) -> str:
+        """Return the full text of the document at `pdf_path`."""
+        ...
+
+    def get_word_bounding_boxes(self, pdf_path: str) -> list[dict]:
+        """Return one box per recognised word in the document."""
+        ...
 
 
 class TesseractOCRService:
-    def __init__(self, ocr_dpi: int = get_settings().OCR_DPI):
+    """OCR backend built on PyMuPDF rasterisation plus Tesseract.
+
+    Attributes:
+        ocr_dpi: Resolution used to rasterise pages. Higher values improve
+            recognition at the cost of time and memory, and are divided back
+            out when reporting coordinates.
+    """
+
+    def __init__(self, ocr_dpi: int = get_settings().OCR_DPI) -> None:
+        """Initialise the service.
+
+        Args:
+            ocr_dpi: Rasterisation resolution in dots per inch. Defaults to
+                the configured `OCR_DPI`.
+        """
         self.ocr_dpi = ocr_dpi
 
-    def _load_image(self, document, page_num: int):
-        page = document[page_num]
-        pix = page.get_pixmap(dpi=self.ocr_dpi)
-        return Image.open(io.BytesIO(pix.tobytes("png")))
-
     def extract_text_from_pdf(self, pdf_path: str) -> str:
-        """Extract text from a scanned PDF using OCR."""
+        """Extract text from a scanned PDF using OCR.
+
+        Pages are processed in order and joined with newlines.
+
+        Args:
+            pdf_path: Filesystem path to the PDF to read.
+
+        Returns:
+            The concatenated text of every page, with a trailing newline per
+            page. Empty pages contribute only their newline.
+
+        Raises:
+            OCRError: If the file cannot be opened as a PDF.
+        """
         full_text = ""
         start = time.perf_counter()
 
@@ -64,7 +95,23 @@ class TesseractOCRService:
         return full_text
 
     def get_word_bounding_boxes(self, pdf_path: str) -> list[dict]:
-        """Get bounding boxes for all words in the PDF."""
+        """Get bounding boxes for all words in the PDF.
+
+        Tesseract reports geometry in pixels of the rasterised page, so each
+        value is multiplied by a scaling factor to return PDF points.
+        Words that OCR returns as whitespace are dropped.
+
+        Args:
+            pdf_path: Filesystem path to the PDF to read.
+
+        Returns:
+            One dictionary per recognised word, in reading order, with keys
+            `word` (str), `page` (int, zero-based) and `x`, `y`,
+            `width`, `height` (float, PDF points from the page's top-left).
+
+        Raises:
+            OCRError: If the file cannot be opened as a PDF.
+        """
         results = []
         start = time.perf_counter()
 

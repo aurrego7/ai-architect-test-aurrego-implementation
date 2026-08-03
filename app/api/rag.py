@@ -1,6 +1,9 @@
+"""HTTP endpoints for document ingestion and question answering."""
+
 import logging
 import os
 import tempfile
+from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
@@ -16,8 +19,26 @@ router = APIRouter()
 
 
 @router.post("/ingest")
-def ingest_pdf(pdf_file: UploadFile = File(...)):  # noqa: B008 FastAPI format
-    """Ingest a PDF document into the vector database."""
+def ingest_pdf(
+    pdf_file: UploadFile = File(...),  # noqa: B008 FastAPI format
+) -> dict[str, Any]:
+    """Ingest a PDF document into the vector database.
+
+    OCRs the upload, splits it into chunks and stores their embeddings.
+    Chunk IDs are content-derived, so re-ingesting the same document updates
+    the existing points instead of duplicating them. The temporary file is
+    always removed, including on failure.
+
+    Args:
+        pdf_file: Uploaded PDF to ingest.
+
+    Returns:
+        A mapping with ``status`` (str) and ``chunks_stored`` (int).
+
+    Raises:
+        HTTPException: 400 if the PDF cannot be read, 503 if the vector store
+            is unavailable.
+    """
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(pdf_file.file.read())
         tmp.close()
@@ -54,8 +75,24 @@ def ingest_pdf(pdf_file: UploadFile = File(...)):  # noqa: B008 FastAPI format
 
 
 @router.post("/ask", response_model=RAGResponse)
-def ask_question(request: RAGRequest):
-    """Answer a question using RAG."""
+def ask_question(request: RAGRequest) -> dict[str, Any]:
+    """Answer a question using RAG.
+
+    Retrieves the most relevant ingested chunks and has the LLM answer from
+    them. When nothing clears the similarity threshold a fallback answer with
+    no sources is returned rather than an error.
+
+    Args:
+        request: Body carrying the question to answer.
+
+    Returns:
+        A mapping matching :class:`~app.models.schemas.RAGResponse`, with
+        ``answer`` and the ``sources`` it was grounded in.
+
+    Raises:
+        HTTPException: 502 if the LLM fails to produce an answer, 503 if the
+            vector store is unavailable.
+    """
     logger.info("Question received: %.80s", request.question)
     try:
         result = generate_answer(request.question)

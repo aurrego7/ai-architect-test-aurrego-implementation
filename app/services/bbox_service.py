@@ -1,5 +1,8 @@
+"""Locating recognised names on the page."""
+
 import logging
 import string
+from collections.abc import Callable
 from typing import Protocol
 
 from app.services.ner_service import extract_names
@@ -9,11 +12,42 @@ logger = logging.getLogger(__name__)
 
 
 class BBoxService(Protocol):
-    def find_name_bounding_boxes(self, pdf_path: str, text: str) -> list[dict]: ...
+    """Interface for resolving names to page regions."""
+
+    def find_name_bounding_boxes(self, pdf_path: str, text: str) -> list[dict]:
+        """Return a box for every occurrence of a recognised name."""
+        ...
 
 
 class BBoxLocator:
-    def __init__(self, ner_function=None, word_boxes_function=None):
+    """Locates person names in a PDF by aligning NER output with OCR words.
+
+    Both collaborators are injectable so the matching algorithm can be tested
+    without running spaCy or Tesseract, and so either stage can be replaced
+    (for example NER swapped for an LLM extractor) as long as the injected
+    callable keeps the same output shape.
+
+    Attributes:
+        ner_function: Callable mapping text to a list of names. When `None`
+            the default spaCy-backed extractor is used.
+        word_boxes_function: Callable mapping a PDF path to positioned words.
+            When `None` the default Tesseract-backed extractor is used.
+    """
+
+    def __init__(
+        self,
+        ner_function: Callable[[str], list[str]] | None = None,
+        word_boxes_function: Callable[[str], list[dict]] | None = None,
+    ) -> None:
+        """Initialize the locator.
+
+        Args:
+            ner_function: Optional replacement for the default name extractor.
+                Must accept the document text and return a list of names.
+            word_boxes_function: Optional replacement for the default word-box
+                extractor. Must accept a PDF path and return dictionaries with
+                `word`, `page`, `x`, `y`, `width` and `height`.
+        """
         self.ner_function = ner_function
         self.word_boxes_function = word_boxes_function
 
@@ -23,6 +57,23 @@ class BBoxLocator:
         We iterate on the words and then check to see if there is any name that matches
         on that word and forward. This reduces the number of times we need to iterate on
         each word (only going forwards, rather than every time from start for each name)
+
+        A name may be split by an unexpected token (a middle name, an OCR
+        artefact), so each subsequent part is searched for within a window of
+        `2 * len(name_parts)` words on the same page. A name only counts as
+        found when EVERY one of its parts is matched, and the reported box is
+        the union of the matched word boxes.
+
+        Args:
+            pdf_path: Filesystem path to the PDF the text came from.
+            text: OCR transcript of that PDF, used for name recognition.
+
+        Returns:
+            One dictionary per name occurrence, with keys `name` (str),
+            `page` (int, zero-based) and `x`, `y`, `width`, `height`
+            (float, PDF points). A name appearing several times yields several
+            entries; a recognised name whose parts cannot be aligned to the
+            word stream yields none.
         """
         # Find functions to be used
         # Allows for swapping with defaults

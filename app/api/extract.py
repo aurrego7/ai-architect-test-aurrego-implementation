@@ -1,7 +1,10 @@
+"""HTTP endpoints for name extraction from uploaded PDFs."""
+
 import json
 import logging
 import os
 import tempfile
+from typing import Any
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import ValidationError
@@ -21,8 +24,28 @@ router = APIRouter()
 def extract_names_from_pdf(
     pdf_file: UploadFile = File(...),  # noqa: B008 FastAPI format
     names: str = Form(...),
-):
-    """Extract names from PDF and perform fuzzy matching."""
+) -> dict[str, Any]:
+    """Extract names from PDF and perform fuzzy matching.
+
+    OCRs the upload, locates every recognised person name on the page, and
+    scores the caller's names against what was found. The temporary file is
+    always removed, including on failure.
+
+    Args:
+        pdf_file: Uploaded document. Must declare the ``application/pdf``
+            content type and begin with the PDF magic number.
+        names: JSON array of ``{"first_name": ..., "last_name": ...}``
+            objects to search for.
+
+    Returns:
+        A mapping matching :class:`~app.models.schemas.ExtractionResponse`,
+        with ``extracted_names`` (one entry per occurrence, each carrying a
+        bounding box) and ``fuzzy_matches``.
+
+    Raises:
+        HTTPException: 400 if the upload is not a PDF, if ``names`` is not a
+            valid JSON array of name objects, or if the PDF cannot be read.
+    """
     # Easy check for proper file type before performing any operation
     if pdf_file.content_type != "application/pdf":
         logger.warning(

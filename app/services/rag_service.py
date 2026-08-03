@@ -1,7 +1,10 @@
+"""Retrieval-augmented generation over ingested documents."""
+
 import logging
 import time
+from collections.abc import Callable
 from string import whitespace
-from typing import Protocol
+from typing import Any, Protocol
 
 import httpx
 
@@ -19,19 +22,72 @@ OPENAI_API_KEY = _key.get_secret_value() if _key else None
 
 
 class RAGService(Protocol):
-    def chunk_text(self, text: str, chunk_size: int = 500) -> list[str]: ...
-    def generate_answer(self, question: str) -> dict: ...
+    """Interface for the chunking and question-answering pipeline."""
+
+    def chunk_text(self, text: str, chunk_size: int = 500) -> list[str]:
+        """Split `text` into chunks of at most `chunk_size` characters."""
+        ...
+
+    def generate_answer(self, question: str) -> dict[str, Any]:
+        """Answer `question` from the retrieved document chunks."""
+        ...
 
 
 class OpenAIRAG:
-    def __init__(self, embedding_function=None, search_function=None):
+    """RAG pipeline that answers questions with the OpenAI chat API.
+
+    Retrieval is injectable so the pipeline can be exercised without a running
+    vector store, and so the retrieval strategy can be replaced independently
+    of answer generation.
+
+    Attributes:
+        embedding_function: Callable turning a question into a vector. When
+            `None` the default sentence-transformers embedder is used.
+        search_function: Callable taking a query vector and a `top_k`
+            keyword and returning scored chunks. When `None` the default
+            Qdrant search is used.
+    """
+
+    def __init__(
+        self,
+        embedding_function: Callable[[str], list[float]] | None = None,
+        search_function: Callable[..., list[dict]] | None = None,
+    ) -> None:
+        """Initialise the pipeline.
+
+        Args:
+            embedding_function: Optional replacement for the default query
+                embedder. Must accept the question and return a vector.
+            search_function: Optional replacement for the default vector
+                search. Called as `search_function(embedding, top_k=...)`
+                and must return dictionaries with a `text` key.
+        """
         self.embedding_function = embedding_function
         self.search_function = search_function
 
     def chunk_text(
         self, text: str, chunk_size: int = get_settings().CHUNK_SIZE
     ) -> list[str]:
-        """Split text into chunks for embedding."""
+        """Split text into chunks for embedding.
+
+        Chunks are cut at the last whitespace inside the window rather than at
+        a fixed offset, so words are never split across two chunks. The cut
+        keeps the last whitespace with the previous chunk, which means
+        concatenating the result generates input exactly.
+
+        Args:
+            text: Text to split, typically a full OCR transcript.
+            chunk_size: Maximum chunk length in characters. Defaults to the
+                configured `CHUNK_SIZE`.
+
+        Returns:
+            The chunks in document order. Empty for empty input, and a single
+            chunk when the text is shorter than `chunk_size`.
+
+        Raises:
+            ValueError: If `chunk_size` is not positive, which would
+                cause inifite while loop.
+        """
         # Check chunk_size to prevent infinite while loop
         if chunk_size <= 0:
             raise ValueError(f"chunk_size must be positive, got {chunk_size}")
@@ -63,6 +119,20 @@ class OpenAIRAG:
         return chunks
 
     def _call_llm(self, prompt: str) -> str:
+        """Send a prompt to the chat completions API and return its answer.
+
+        Args:
+            prompt: Fully rendered prompt, context included.
+
+        Returns:
+            The assistant message content from the first choice.
+
+        Raises:
+            LLMError: If the request times out, is rejected, fails at the
+                transport level, or returns a body that is not JSON or does
+                not have the expected shape. The original exception is
+                always passed along.
+        """
         settings = get_settings()
         model = settings.LLM_MODEL
         logger.debug("Calling LLM '%s' with prompt of %d chars", model, len(prompt))
@@ -110,8 +180,25 @@ class OpenAIRAG:
         logger.info("LLM call completed in %.2fs", time.perf_counter() - start)
         return answer
 
-    def generate_answer(self, question: str) -> dict:
-        """Generate an answer using RAG strategy."""
+    def generate_answer(self, question: str) -> dict[str, Any]:
+        """Generate an answer using RAG strategy.
+
+        Retrieval runs first; when it returns nothing above the score
+        threshold the LLM is never called and a fixed fallback is returned, so
+        an unanswerable question costs no tokens.
+
+        Args:
+            question: Natural-language question to answer.
+
+        Returns:
+            A mapping with `answer` (str) and `sources` (list of str, the
+            raw text of the chunks used as context, empty when nothing was
+            retrieved).
+
+        Raises:
+            LLMError: If the LLM call fails.
+            VectorStoreError: If retrieval fails or the store is unreachable.
+        """
         embed_query = self.embedding_function or get_query_embedding
         get_relevant_chunks = self.search_function or search_similar
 

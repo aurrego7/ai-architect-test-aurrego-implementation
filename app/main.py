@@ -1,3 +1,5 @@
+"""FastAPI application entrypoint."""
+
 import logging
 
 from fastapi import FastAPI
