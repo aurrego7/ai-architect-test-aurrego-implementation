@@ -1,0 +1,39 @@
+name: validation-workflow
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.12"
+
+      - name: Install tesseract
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr tesseract-ocr-eng
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Install spacy model
+        run: uv run python -m spacy download en_core_web_sm
+
+      - name: Run tests
+        env:
+          OPENAI_API_KEY: test-key
+        run: uv run pytest -v
