@@ -1,35 +1,54 @@
+from typing import Protocol
+
 from thefuzz import fuzz
 
 SIMILARITY_THRESHOLD = 90
 
 
-def fuzzy_match_names(
-    extracted_names: list[str],
-    query_names: list[dict],
-) -> list[dict]:
-    """Perform fuzzy matching between extracted and query names."""
-    matches = []
+class NameMatcher(Protocol):
+    def match_names(
+        self,
+        extracted_names: list[str],
+        query_names: list[dict],
+    ) -> list[dict]: ...
 
-    for query in query_names:
-        query_full = f"{query['first_name']} {query['last_name']}"
 
-        best_match = None
-        best_score = 0
+class FuzzyMatcher:
+    def __init__(self, similarity_threshold: int = SIMILARITY_THRESHOLD):
+        self.similarity_threshold = similarity_threshold
 
-        for extracted in extracted_names:
-            score = fuzz.ratio(query_full, extracted)
+    def match_names(
+        self,
+        extracted_names: list[str],
+        query_names: list[dict],
+    ) -> list[dict]:
+        """Perform fuzzy matching between extracted and query names."""
+        matches = []
 
-            if score > best_score:
-                best_score = score
-                best_match = extracted
+        for query in query_names:
+            query_full = f"{query['first_name']} {query['last_name']}"
 
-        if best_score >= SIMILARITY_THRESHOLD:
-            matches.append(
-                {
-                    "extracted_name": best_match,
-                    "matched_name": query_full,
-                    "score": best_score / 100.0,
-                }
-            )
+            best_match = None
+            best_score = 0
 
-    return matches
+            for extracted in extracted_names:
+                score = fuzz.ratio(query_full, extracted)
+
+                if score > best_score:
+                    best_score = score
+                    best_match = extracted
+
+            if best_score >= self.similarity_threshold:
+                matches.append(
+                    {
+                        "extracted_name": best_match,
+                        "matched_name": query_full,
+                        "score": best_score / 100.0,
+                    }
+                )
+
+        return matches
+
+
+_default_matcher = FuzzyMatcher(SIMILARITY_THRESHOLD)
+fuzzy_match_names = _default_matcher.match_names
