@@ -156,7 +156,7 @@ As part of your submission, fill in the tables below documenting every bug you f
 | # | Practice | Where / How You Implemented It |
 |---|----------|-------------------------------|
 | 1 | Linting | Utilize ruff to dictate linting and formating standards for readability and consistency |
-| 2 |          |                               |
+| 2 | Idempotency in uploads | The pdf upload to the vector store should be indempotent to save from reuploads. By using `uuid5` on the chunk helps guard this |
 | 3 |          |                               |
 
 (add more rows as needed)

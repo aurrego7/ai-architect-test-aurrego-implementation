@@ -10,6 +10,7 @@ client = create_qdrant_client()
 
 COLLECTION_NAME = "pdf_documents"
 VECTOR_SIZE = 384
+POINT_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_DNS, "pdf-rag.chunks")
 
 
 class VectorStore(Protocol):
@@ -57,7 +58,7 @@ class QdrantVectorStore:
 
             points.append(
                 PointStruct(
-                    id=str(uuid.uuid4()),
+                    id=str(uuid.uuid5(POINT_NAMESPACE, chunk)),
                     vector=embedding,
                     payload=payload,
                 )
