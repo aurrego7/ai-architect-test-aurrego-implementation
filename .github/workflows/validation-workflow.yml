@@ -37,3 +37,41 @@ jobs:
         env:
           OPENAI_API_KEY: test-key
         run: uv run pytest -v
+
+  test-docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker compose build
+
+      - name: Start stack
+        run: docker compose up -d --wait --wait-timeout 180
+
+      - name: Test /health
+        run: curl http://localhost:8000/health | jq -e '.status == "ok"'
+
+      - name: Test /api/extract
+        run: |
+          curl -sSf -X POST http://localhost:8000/api/extract \
+            -F "pdf_file=@sample_pdfs/company_memo.pdf;type=application/pdf" \
+            -F 'names=[{"first_name":"Margaret","last_name":"Thompson"}]' \
+            | tee /dev/stderr \
+            | jq -e '.extracted_names | length > 0'
+
+      - name: Test /api/ingest
+        run: |
+          curl -sSf -X POST http://localhost:8000/api/ingest \
+            -F "pdf_file=@sample_pdfs/company_memo.pdf;type=application/pdf" \
+            | tee /dev/stderr \
+            | jq -e '.chunks_stored > 0'
+
+      - name: Dump logs
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
