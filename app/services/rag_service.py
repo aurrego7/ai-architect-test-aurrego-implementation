@@ -1,14 +1,16 @@
-import os
 from string import whitespace
 from typing import Protocol
 
 import httpx
 
+from app.core.config import get_settings
 from app.core.prompts import rag_question_prompt
 from app.services.embedding_service import get_query_embedding
 from app.services.vector_service import search_similar
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+_key = get_settings().OPENAI_API_KEY
+OPENAI_API_KEY = _key.get_secret_value() if _key else None
+# Keeping this here to allow for test to patch without errors
 
 
 class RAGService(Protocol):
@@ -21,7 +23,9 @@ class OpenAIRAG:
         self.embedding_function = embedding_function
         self.search_function = search_function
 
-    def chunk_text(self, text: str, chunk_size: int = 500) -> list[str]:
+    def chunk_text(
+        self, text: str, chunk_size: int = get_settings().CHUNK_SIZE
+    ) -> list[str]:
         """Split text into chunks for embedding."""
         # Check chunk_size to prevent infinite while loop
         if chunk_size <= 0:
@@ -55,7 +59,7 @@ class OpenAIRAG:
                 "Content-Type": "application/json",
             },
             json={
-                "model": "gpt-3.5-turbo",
+                "model": get_settings().LLM_MODEL,
                 "messages": [{"role": "user", "content": prompt}],
             },
         )
@@ -71,7 +75,9 @@ class OpenAIRAG:
         get_relevant_chunks = self.search_function or search_similar
 
         query_embedding = embed_query(question)
-        relevant_chunks = get_relevant_chunks(query_embedding, top_k=3)
+        relevant_chunks = get_relevant_chunks(
+            query_embedding, top_k=get_settings().TOP_K
+        )
 
         if not relevant_chunks:
             return {"answer": "No relevant information found.", "sources": []}

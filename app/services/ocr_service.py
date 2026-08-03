@@ -5,6 +5,8 @@ import fitz
 import pytesseract
 from PIL import Image
 
+from app.core.config import get_settings
+
 
 class OCRService(Protocol):
     def extract_text_from_pdf(self, pdf_path: str) -> str: ...
@@ -12,7 +14,7 @@ class OCRService(Protocol):
 
 
 class TesseractOCRService:
-    def __init__(self, ocr_dpi: int = 150):
+    def __init__(self, ocr_dpi: int = get_settings().OCR_DPI):
         self.ocr_dpi = ocr_dpi
 
     def _load_image(self, document, page_num: int):

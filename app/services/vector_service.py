@@ -3,13 +3,12 @@ from typing import Protocol
 
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
+from app.core.config import get_settings
 from app.core.providers import create_qdrant_client
 from app.services.embedding_service import get_embeddings
 
 client = create_qdrant_client()
 
-COLLECTION_NAME = "pdf_documents"
-VECTOR_SIZE = 384
 POINT_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_DNS, "pdf-rag.chunks")
 
 
@@ -24,7 +23,9 @@ class VectorStore(Protocol):
 
 
 class QdrantVectorStore:
-    def __init__(self, qdrant_client=None, collection: str = COLLECTION_NAME):
+    def __init__(
+        self, qdrant_client=None, collection: str = get_settings().COLLECTION_NAME
+    ):
         self.client = qdrant_client
         self.collection = collection
 
@@ -38,7 +39,7 @@ class QdrantVectorStore:
             vs_client.create_collection(
                 collection_name=self.collection,
                 vectors_config=VectorParams(
-                    size=VECTOR_SIZE,
+                    size=get_settings().VECTOR_SIZE,
                     distance=Distance.COSINE,
                 ),
             )
@@ -75,7 +76,7 @@ class QdrantVectorStore:
             collection_name=self.collection,
             query_vector=query_embedding,
             limit=top_k,
-            score_threshold=0.5,
+            score_threshold=get_settings().SCORE_THRESHOLD,
         )
 
         return [

@@ -2,7 +2,10 @@ from typing import Protocol
 
 from thefuzz import fuzz
 
-SIMILARITY_THRESHOLD = 90
+from app.core.config import get_settings
+
+SIMILARITY_THRESHOLD = get_settings().SIMILARITY_THRESHOLD
+# Keeping this here to allow for test to patch without errors
 
 
 class NameMatcher(Protocol):
