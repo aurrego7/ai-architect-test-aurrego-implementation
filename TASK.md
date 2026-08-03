@@ -161,6 +161,7 @@ As part of your submission, fill in the tables below documenting every bug you f
 | 4 | Logging | Created the logging infrastructure and add log messages across code for visibility, tracking and error detection |
 | 5 | Error and exception handling | Create a set of errors in errors.py and catch errors around the code implementation to translate to the core errors. This allows for proper visibility when erros ocurr |
 | 6 | Docstrings & type annotations | Add google-style docstring and type annotations to all functions and classes |
+| 7 | Continous Intengration (CI) | Added github action workflows to run linting and validations whenever a PR is created |
 
 (add more rows as needed)
 
