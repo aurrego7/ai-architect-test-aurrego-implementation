@@ -3,7 +3,9 @@ from typing import Protocol
 from app.core.providers import load_embedding_model
 
 
-class EmbeddingService(Protocol): ...
+class EmbeddingService(Protocol):
+    def embed_texts(self, texts: list[str]) -> list[list[float]]: ...
+    def embed_query(self, query: str) -> list[float]: ...
 
 
 class SentenceTransformerEmbedder:
