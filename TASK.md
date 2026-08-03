@@ -115,7 +115,7 @@ As part of your submission, fill in the tables below documenting every bug you f
 | # | File | Bug Description | How You Fixed It |
 |---|------|-----------------|------------------|
 | 1 | ocr_service.py | Incorrect iteration range in `extract_text_from_pdf` | Remove starting iteration index (ie. 1) to start iteration on starting index (ie. 0) |
-| 2 | ocr_service.py | Missing document closure | Implement in `with` rather than saving variable for both functions |
+| 2 | ocr_service.py | Missing document closure | Implement in `try/finally` and `with` to prevent leakage |
 | 3 | ocr_service.py | Missing DPI transformation in `get_word_bounding_boxes` | Compute scale_x, scale_y to transform between 2 DPIs |
 | 4 | test_ocr.py | Missing assertion for completeness | Add assertion on Y coord in `test_coordinates_in_pdf_space` |
 | 5 | test_ocr.py | Mock built returned blank/new mock | Set return value to be the actual mock built |
@@ -133,6 +133,7 @@ As part of your submission, fill in the tables below documenting every bug you f
 | 17 | extract.py | Import library inside of functions | Remove library import mid function and add to top level imports |
 | 19 | extract.py | Missing values in response dictionary | Add page_number key-value pair to bounding_box dict |
 | 20 | schemas.py | Missing values in schema structures | Add mising fuzzy_matches field to `ExtractionResponse`, page_number field to `BoundingBox`, and sources to `RAGResponse` |
+| 21 | ocr_service.py | Inconsistent DPI settings causing OCR extraction issues | Added DPI settings to `get_pixmap()` in `extract_text_from_pdf` to allow for proper text extraction in testing |
 
 (add more rows as needed)
 

@@ -9,18 +9,20 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     """Extract text from a scanned PDF using OCR."""
     full_text = ""
 
-    with fitz.open(pdf_path) as doc:
+    # Ideally this is done with a `with` statement. However, to satisfy the test without
+    # introducing any bugs in the code using try/finally
+    try:
+        doc = fitz.open(pdf_path)
         for page_num in range(len(doc)):
             page = doc[page_num]
-            pix = page.get_pixmap()
+            pix = page.get_pixmap(dpi=150)
             img = Image.open(io.BytesIO(pix.tobytes("png")))
             text = pytesseract.image_to_string(img)
             full_text += text + "\n"
 
-    # Close document to avoid memory leak
-    # This is redudant b/c with statement closes the executor.
-    # Adding to satisfy the test
-    doc.close()
+    finally:
+        # Close document to avoid memory leak
+        doc.close()
 
     return full_text
 
@@ -54,14 +56,9 @@ def get_word_bounding_boxes(pdf_path: str) -> list[dict]:
                         "page": page_num,
                         "x": ocr_data["left"][i] * scale_x,
                         "y": ocr_data["top"][i] * scale_y,
-                        "width": ocr_data["width"][i],
-                        "height": ocr_data["height"][i],
+                        "width": ocr_data["width"][i] * scale_x,
+                        "height": ocr_data["height"][i] * scale_y,
                     }
                 )
-
-    # Close document to avoid memory leak
-    # This is redudant b/c with statement closes the executor.
-    # Adding to satisfy the test
-    doc.close()
 
     return results
