@@ -26,7 +26,9 @@ class BBoxLocator:
         get_names = self.ner_function or extract_names
         get_bounding_boxes = self.word_boxes_function or get_word_bounding_boxes
 
-        names = get_names(text)
+        # NER name extraction returns every name so it contains duplicates
+        # Deplucating here and then the finding algorithm will find all ocurrences
+        names = list(dict.fromkeys(get_names(text)))
         word_boxes = get_bounding_boxes(pdf_path)
         words = [
             b["word"].casefold().strip(string.punctuation) for b in word_boxes

@@ -24,7 +24,7 @@ class SentenceTransformerEmbedder:
         A query embedding is a text embedding of a single element list,
         so we reutilize `embed_text`.
         """
-        return self.embed_texts([query])[0].tolist()
+        return self.embed_texts([query])[0]
 
 
 _default_embedder = SentenceTransformerEmbedder()
