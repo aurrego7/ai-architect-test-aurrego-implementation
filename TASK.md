@@ -159,6 +159,7 @@ As part of your submission, fill in the tables below documenting every bug you f
 | 2 | Idempotency in uploads | The pdf upload to the vector store should be indempotent to save from reuploads. By using `uuid5` on the chunk helps guard this |
 | 3 | Config for parameters and keys | Built config.py with pydantic-settings config to start keys, paramaters and general values |
 | 4 | Logging | Created the logging infrastructure and add log messages across code for visibility, tracking and error detection |
+| 5 | Error and exception handling | Create a set of errors in errors.py and catch errors around the code implementation to translate to the core errors. This allows for proper visibility when erros ocurr |
 
 (add more rows as needed)
 

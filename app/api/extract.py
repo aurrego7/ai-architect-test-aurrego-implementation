@@ -4,8 +4,10 @@ import os
 import tempfile
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from pydantic import ValidationError
 
-from app.models.schemas import ExtractionResponse
+from app.core.errors import OCRError
+from app.models.schemas import ExtractionResponse, NamePair
 from app.services.bbox_service import find_name_bounding_boxes
 from app.services.fuzzy_service import fuzzy_match_names
 from app.services.ocr_service import extract_text_from_pdf
@@ -45,6 +47,21 @@ def extract_names_from_pdf(
             status_code=400, detail="Invalid file type. File must be a PDF."
         )
 
+    # Validate the names payload before doing any expensive OCR work
+    # JSONDecodeError: not valid JSON
+    # TypeError: an item is not a dict
+    # ValidationError: an item is missing/has wrong fields
+    try:
+        raw_names = json.loads(names)
+        query_names = [NamePair(**item).model_dump() for item in raw_names]
+    except (json.JSONDecodeError, TypeError, ValidationError) as exc:
+        logger.warning("Rejected extraction request: invalid names payload")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid names format. Expected a JSON array of "
+            '{"first_name": ..., "last_name": ...} objects.',
+        ) from exc
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(pdf_file.file.read())
         tmp.close()
@@ -58,8 +75,6 @@ def extract_names_from_pdf(
         text = extract_text_from_pdf(tmp.name)
 
         name_boxes = find_name_bounding_boxes(tmp.name, text)
-
-        query_names = json.loads(names)
 
         extracted_name_strings = [nb["name"] for nb in name_boxes]
         matches = fuzzy_match_names(extracted_name_strings, query_names)
@@ -86,5 +101,9 @@ def extract_names_from_pdf(
             ],
             "fuzzy_matches": matches,
         }
+    except OCRError as exc:
+        raise HTTPException(
+            status_code=400, detail="Could not process the PDF file."
+        ) from exc
     finally:
         os.unlink(tmp.name)

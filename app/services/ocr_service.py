@@ -8,6 +8,7 @@ import pytesseract
 from PIL import Image
 
 from app.core.config import get_settings
+from app.core.errors import OCRError
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,12 @@ class TesseractOCRService:
         # Ideally this is done with a `with` statement.
         # However, to satisfy the test without introducing any bugs
         # in the code using try/finally
-        doc = fitz.open(pdf_path)
+        try:
+            doc = fitz.open(pdf_path)
+        except (RuntimeError, ValueError) as exc:
+            logger.error("Could not open PDF '%s': %s", pdf_path, exc)
+            raise OCRError("Could not open PDF") from exc
+
         try:
             page_count = len(doc)
             for page_num in range(page_count):
@@ -62,7 +68,13 @@ class TesseractOCRService:
         results = []
         start = time.perf_counter()
 
-        with fitz.open(pdf_path) as doc:
+        try:
+            doc = fitz.open(pdf_path)
+        except (RuntimeError, ValueError) as exc:
+            logger.error("Could not open PDF '%s': %s", pdf_path, exc)
+            raise OCRError("Could not open PDF") from exc
+
+        with doc:
             for page_num in range(len(doc)):
                 page = doc[page_num]
                 pix = page.get_pixmap(dpi=self.ocr_dpi)

@@ -6,6 +6,7 @@ from typing import Protocol
 import httpx
 
 from app.core.config import get_settings
+from app.core.errors import LLMError
 from app.core.prompts import rag_question_prompt
 from app.services.embedding_service import get_query_embedding
 from app.services.vector_service import search_similar
@@ -62,24 +63,49 @@ class OpenAIRAG:
         return chunks
 
     def _call_llm(self, prompt: str) -> str:
-        model = get_settings().LLM_MODEL
+        settings = get_settings()
+        model = settings.LLM_MODEL
         logger.debug("Calling LLM '%s' with prompt of %d chars", model, len(prompt))
         start = time.perf_counter()
-        response = httpx.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {OPENAI_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": model,
-                "messages": [{"role": "user", "content": prompt}],
-            },
-            timeout=get_settings().LLM_TIMEOUT_SEC,
-        )
+        try:
+            response = httpx.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {OPENAI_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                },
+                timeout=settings.LLM_TIMEOUT_SEC,
+            )
+            response.raise_for_status()
+        except httpx.TimeoutException as exc:
+            logger.error("LLM request timed out after %.0fs", settings.LLM_TIMEOUT_SEC)
+            raise LLMError("LLM request timed out") from exc
+        except httpx.HTTPStatusError as exc:
+            logger.error(
+                "LLM returned HTTP %d: %.500s",
+                exc.response.status_code,
+                exc.response.text,
+            )
+            raise LLMError("LLM request rejected") from exc
+        except httpx.HTTPError as exc:
+            logger.error("LLM request failed: %s", exc)
+            raise LLMError("LLM unreachable") from exc
 
-        result = response.json()
-        answer = result["choices"][0]["message"]["content"]
+        try:
+            result = response.json()
+        except ValueError as exc:
+            logger.error("LLM response was not JSON: %.300s", response.text)
+            raise LLMError("Unexpected LLM response") from exc
+
+        try:
+            answer = result["choices"][0]["message"]["content"]
+        except (KeyError, IndexError, TypeError) as exc:
+            logger.error("Unexpected LLM response shape: %.300s", str(result))
+            raise LLMError("Unexpected LLM response") from exc
 
         logger.info("LLM call completed in %.2fs", time.perf_counter() - start)
         return answer

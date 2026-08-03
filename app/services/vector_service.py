@@ -2,9 +2,11 @@ import logging
 import uuid
 from typing import Protocol
 
+from qdrant_client.http.exceptions import ApiException
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
 from app.core.config import get_settings
+from app.core.errors import VectorStoreError
 from app.core.providers import create_qdrant_client
 from app.services.embedding_service import get_embeddings
 
@@ -35,18 +37,28 @@ class QdrantVectorStore:
     def init_collection(self) -> None:
         """Create the vector collection if it doesn't exist."""
         vs_client = self.client or client
-        collections = vs_client.get_collections().collections
+        try:
+            collections = vs_client.get_collections().collections
+        except ApiException as exc:
+            logger.error("Vector store unreachable while listing collections: %s", exc)
+            raise VectorStoreError("Vector store unavailable") from exc
         existing = [c.name for c in collections]
 
         if self.collection not in existing:
             logger.info("Creating collection '%s'", self.collection)
-            vs_client.create_collection(
-                collection_name=self.collection,
-                vectors_config=VectorParams(
-                    size=get_settings().VECTOR_SIZE,
-                    distance=Distance.COSINE,
-                ),
-            )
+            try:
+                vs_client.create_collection(
+                    collection_name=self.collection,
+                    vectors_config=VectorParams(
+                        size=get_settings().VECTOR_SIZE,
+                        distance=Distance.COSINE,
+                    ),
+                )
+            except ApiException as exc:
+                logger.error(
+                    "Failed to create collection '%s': %s", self.collection, exc
+                )
+                raise VectorStoreError("Vector store unavailable") from exc
         else:
             logger.debug("Collection '%s' already exists", self.collection)
 
@@ -71,7 +83,11 @@ class QdrantVectorStore:
                 )
             )
 
-        vs_client.upsert(collection_name=self.collection, points=points)
+        try:
+            vs_client.upsert(collection_name=self.collection, points=points)
+        except ApiException as exc:
+            logger.error("Failed to store %d chunks: %s", len(points), exc)
+            raise VectorStoreError("vector store unavailable") from exc
         logger.info("Stored %d chunks in collection '%s'", len(points), self.collection)
 
     def search_similar(
@@ -80,12 +96,16 @@ class QdrantVectorStore:
         """Search for similar text chunks."""
         vs_client = self.client or client
         score_threshold = get_settings().SCORE_THRESHOLD
-        results = vs_client.search(
-            collection_name=self.collection,
-            query_vector=query_embedding,
-            limit=top_k,
-            score_threshold=score_threshold,
-        )
+        try:
+            results = vs_client.search(
+                collection_name=self.collection,
+                query_vector=query_embedding,
+                limit=top_k,
+                score_threshold=score_threshold,
+            )
+        except ApiException as exc:
+            logger.error("Vector search failed: %s", exc)
+            raise VectorStoreError("Vector store unavailable") from exc
 
         hits = [
             {
