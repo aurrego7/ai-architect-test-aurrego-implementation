@@ -131,9 +131,9 @@ As part of your submission, fill in the tables below documenting every bug you f
 | 15 | rag_service.py | Incorrect interpolation due to double set of brackets | Remove extra set of brackets to allow proper string interpolation |
 | 16 | extract.py | No file type check on uploaded file | Added a cheap and expensive file type check for early exit |
 | 17 | extract.py | Import library inside of functions | Remove library import mid function and add to top level imports |
-| 19 | extract.py | Missing values in response dictionary | Add page_number key-value pair to bounding_box dict |
-| 20 | schemas.py | Missing values in schema structures | Add mising fuzzy_matches field to `ExtractionResponse`, page_number field to `BoundingBox`, and sources to `RAGResponse` |
-| 21 | ocr_service.py | Inconsistent DPI settings causing OCR extraction issues | Added DPI settings to `get_pixmap()` in `extract_text_from_pdf` to allow for proper text extraction in testing |
+| 18 | extract.py | Missing values in response dictionary | Add page_number key-value pair to bounding_box dict |
+| 19 | schemas.py | Missing values in schema structures | Add mising fuzzy_matches field to `ExtractionResponse`, page_number field to `BoundingBox`, and sources to `RAGResponse` |
+| 20 | ocr_service.py | Inconsistent DPI settings causing OCR extraction issues | Added DPI settings to `get_pixmap()` in `extract_text_from_pdf` to allow for proper text extraction in testing |
 
 (add more rows as needed)
 
