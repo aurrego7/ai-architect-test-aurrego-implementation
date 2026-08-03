@@ -98,5 +98,6 @@ class BBoxLocator:
 
         return name_boxes
 
+
 _default_bbox = BBoxLocator()
 find_name_bounding_boxes = _default_bbox.find_name_bounding_boxes

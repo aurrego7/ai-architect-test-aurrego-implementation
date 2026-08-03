@@ -4,8 +4,6 @@ These tests verify fuzzy name matching behavior.
 Some tests will FAIL due to bugs in the current implementation.
 """
 
-import pytest
-
 
 class TestFuzzyMatchNames:
     """Tests for fuzzy_match_names function."""
@@ -45,7 +43,8 @@ class TestFuzzyMatchNames:
         matches = fuzzy_match_names(extracted, query)
 
         assert len(matches) == 0, (
-            "Partial names should not match — 'Jo Sm' is not similar enough to 'John Smith'"
+            "Partial names should not match"
+            "'Jo Sm' is not similar enough to 'John Smith'"
         )
 
     def test_close_match_above_threshold(self):

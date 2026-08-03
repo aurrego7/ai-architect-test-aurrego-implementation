@@ -6,8 +6,6 @@ Some tests will FAIL due to bugs in the current implementation.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 
 class TestChunkText:
     """Tests for chunk_text function."""

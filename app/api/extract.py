@@ -14,7 +14,7 @@ router = APIRouter()
 
 @router.post("/extract", response_model=ExtractionResponse)
 def extract_names_from_pdf(
-    pdf_file: UploadFile = File(...),
+    pdf_file: UploadFile = File(...),  # noqa: B008 FastAPI format
     names: str = Form(...),
 ):
     """Extract names from PDF and perform fuzzy matching."""

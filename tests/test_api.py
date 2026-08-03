@@ -5,9 +5,7 @@ Some tests will FAIL due to bugs in the current implementation.
 """
 
 import json
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 
 class TestExtractEndpoint:

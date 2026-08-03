@@ -78,6 +78,7 @@ class TesseractOCRService:
 
         return results
 
+
 _default_ocr = TesseractOCRService()
 extract_text_from_pdf = _default_ocr.extract_text_from_pdf
 get_word_bounding_boxes = _default_ocr.get_word_bounding_boxes

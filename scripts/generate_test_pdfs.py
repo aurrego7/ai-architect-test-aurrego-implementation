@@ -5,6 +5,7 @@ Uses only PIL (Pillow) — no extra dependencies needed.
 """
 
 import os
+
 from PIL import Image, ImageDraw, ImageFont
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "sample_pdfs")

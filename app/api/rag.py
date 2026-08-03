@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.post("/ingest")
-def ingest_pdf(pdf_file: UploadFile = File(...)):
+def ingest_pdf(pdf_file: UploadFile = File(...)):  # noqa: B008 FastAPI format
     """Ingest a PDF document into the vector database."""
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(pdf_file.file.read())

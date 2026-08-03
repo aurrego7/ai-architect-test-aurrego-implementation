@@ -6,8 +6,6 @@ Some tests will FAIL due to bugs in the current implementation.
 
 from unittest.mock import patch
 
-import pytest
-
 
 class TestFindNameBoundingBoxes:
     """Tests for find_name_bounding_boxes function."""

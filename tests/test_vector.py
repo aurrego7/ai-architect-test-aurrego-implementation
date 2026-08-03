@@ -4,9 +4,8 @@ These tests verify Qdrant integration.
 Some tests will FAIL due to bugs in the current implementation.
 """
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
-import pytest
 from qdrant_client.models import Distance
 
 
