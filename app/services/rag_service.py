@@ -75,6 +75,7 @@ class OpenAIRAG:
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],
             },
+            timeout=get_settings().LLM_TIMEOUT_SEC,
         )
 
         result = response.json()

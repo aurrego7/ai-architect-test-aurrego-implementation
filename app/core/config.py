@@ -32,6 +32,7 @@ class Settings(BaseSettings):
 
     # GENERAL
     LOG_LEVEL: str = "info"
+    LLM_TIMEOUT_SEC: int = 30
 
 
 @lru_cache
