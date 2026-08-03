@@ -1,0 +1,28 @@
+services:
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - 6333:6333
+    volumes:
+      - vector-store-data:/qdrant/storage
+
+  pdf-api:
+    image: pdf-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pdf-api
+    depends_on:
+      - qdrant 
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+
+volumes:
+  vector-store-data:
