@@ -32,7 +32,7 @@ class SentenceTransformerEmbedder:
     """
 
     def __init__(self, model: SentenceTransformer | None = None) -> None:
-        """Initialise the embedder.
+        """Initilize the embedder.
 
         Args:
             model: Optional model to use instead of the shared cached one.

@@ -37,7 +37,7 @@ class FuzzyMatcher:
     """
 
     def __init__(self, similarity_threshold: int = SIMILARITY_THRESHOLD) -> None:
-        """Initialise the matcher.
+        """Initialize the matcher.
 
         Args:
             similarity_threshold: Minimum score out of 100 for a match to be

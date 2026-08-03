@@ -34,7 +34,7 @@ class SpacyNERService:
     """
 
     def __init__(self, model: Language | None = None) -> None:
-        """Initialise the service.
+        """Initialize the service.
 
         Args:
             model: Optional spaCy pipeline to use instead of the shared one.

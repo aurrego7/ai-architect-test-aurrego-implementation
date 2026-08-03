@@ -37,7 +37,7 @@ class TesseractOCRService:
     """
 
     def __init__(self, ocr_dpi: int = get_settings().OCR_DPI) -> None:
-        """Initialise the service.
+        """Initialize the service.
 
         Args:
             ocr_dpi: Rasterisation resolution in dots per inch. Defaults to

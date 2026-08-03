@@ -53,7 +53,7 @@ class OpenAIRAG:
         embedding_function: Callable[[str], list[float]] | None = None,
         search_function: Callable[..., list[dict]] | None = None,
     ) -> None:
-        """Initialise the pipeline.
+        """Initialize the pipeline.
 
         Args:
             embedding_function: Optional replacement for the default query
