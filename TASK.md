@@ -148,6 +148,7 @@ As part of your submission, fill in the tables below documenting every bug you f
 | 5 | Allow dependency functions in rag and bbox services to be ingested | Since the functions are dependecies for those services, by allowing ingestion we can quickly change to a different function/logic (ie. switching from NER to LLM or different bbox algorithm) without reworking drastically the service. The function needs to mantain the same output contract. |
 | 6 | Create prompts.py to hold prompts | Have a single place of reference for all prompts, and by extracting the prompt from rag_service.py the separation of responsibility is clearer since rag_service is only concerned about executing the rag, not the quality of the prompt it uses |
 | 7 | Extract llm call into class function | Create a small `_call_llm` function outside of `generate_answer` makes the intention of the `generate_answer` function more as an executor rather than configuration. This also allow to modify llm interaction independently in future situations |
+| 8 | Use uv instead venv | UV is faster (built on Rust), has smart caching for packages, better disk space management |
 
 (add more rows as needed)
 
