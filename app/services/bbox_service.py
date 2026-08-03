@@ -1,72 +1,100 @@
+import string
+from typing import Protocol
+
 from app.services.ner_service import extract_names
 from app.services.ocr_service import get_word_bounding_boxes
 
 
-def find_name_bounding_boxes(pdf_path: str, text: str) -> list[dict]:
-    """Match extracted names to their bounding boxes in the PDF.
+class BBoxService(Protocol):
+    def find_name_bounding_boxes(self, pdf_path: str, text: str) -> list[dict]: ...
 
-    We iterate on the words and then check to see if there is any name that matches on
-    that word and forward. This reduces the number of times we need to iterate on the
-    each word (only going forwards, rather than every time from the start for each name)
-    """
-    names = extract_names(text)
-    word_boxes = get_word_bounding_boxes(pdf_path)
-    words = [b["word"].casefold() for b in word_boxes]  # casefold for case-insensitive
 
-    name_boxes = []
+class BBoxLocator:
+    def __init__(self, ner_fn=None, word_boxes_fn=None):
+        self.ner_fn = ner_fn
+        self.word_boxes_fn = word_boxes_fn
 
-    i = 0
-    while i < len(words):
-        furthest = i
-        for name in names:
-            matched_boxes = []
-            name_parts = [
-                part.casefold() for part in name.split()
-            ]  # casefold for case-insensitive
+    def find_name_bounding_boxes(self, pdf_path: str, text: str) -> list[dict]:
+        """Match extracted names to their bounding boxes in the PDF.
 
-            # If the first word of the name is not this word skip
-            # since name doesn't start here
-            if words[i] != name_parts[0]:
-                continue
+        We iterate on the words and then check to see if there is any name that matches
+        on that word and forward. This reduces the number of times we need to iterate on
+        each word (only going forwards, rather than every time from start for each name)
+        """
+        # Find functions to be used
+        # Allows for swapping with defaults
+        ner = self.ner_fn or extract_names
+        bbox = self.word_boxes_fn or get_word_bounding_boxes
 
-            page = word_boxes[i]["page"]
+        names = ner(text)
+        word_boxes = bbox(pdf_path)
+        words = [
+            b["word"].casefold().strip(string.punctuation) for b in word_boxes
+        ]  # casefold for case-insensitive and punctuation-insensitive
 
-            # max_gap helps for cases when name has an intermediate word
-            # ex. name = "Jhon Smith" and you find "Jhon Michael Smith"
-            # Potential improvement in better computation of limit to search for
-            max_gap = len(name_parts) * 2
+        name_boxes = []
 
-            word_box_index = i
-            for part in name_parts:
-                # Iterate over all word_boxes after the previous word_box that matched
-                # up to the max_gap. Bound at the last word to prevent index error
-                for j in range(
-                    word_box_index, min(word_box_index + max_gap + 1, len(word_boxes))
-                ):
-                    if words[j] == part and word_boxes[j]["page"] == page:
-                        matched_boxes.append(word_boxes[j])
-                        word_box_index = j + 1
-                        break  # Break at match since the name part was found on word
+        i = 0
+        while i < len(words):
+            furthest = i
+            for name in names:
+                matched_boxes = []
+                name_parts = [
+                    part.casefold().strip(string.punctuation) for part in name.split()
+                ]  # casefold for case-insensitive and punctuation-insensitive
 
-            # Only if all of the parts of the name are found save it
-            if len(matched_boxes) == len(name_parts):
-                min_x = min(b["x"] for b in matched_boxes)
-                min_y = min(b["y"] for b in matched_boxes)
-                max_x = max(b["x"] + b["width"] for b in matched_boxes)
-                max_y = max(b["y"] + b["height"] for b in matched_boxes)
+                # If a blank name_part skip
+                if not name_parts:
+                    continue
 
-                name_boxes.append(
-                    {
-                        "name": name,
-                        "page": matched_boxes[0]["page"],
-                        "x": min_x,
-                        "y": min_y,
-                        "width": max_x - min_x,
-                        "height": max_y - min_y,
-                    }
-                )
-                furthest = max(furthest, word_box_index - 1)
+                # If the first word of the name is not this word
+                # skip since name doesn't start here
+                if words[i] != name_parts[0]:
+                    continue
 
-        i = furthest + 1
+                page = word_boxes[i]["page"]
 
-    return name_boxes
+                # max_gap helps for cases when name has an intermediate word
+                # ex. name = "Jhon Smith" and you find "Jhon Michael Smith"
+                # Potential improvement in better computation of limit to search for
+                max_gap = len(name_parts) * 2
+
+                word_box_index = i
+                for part in name_parts:
+                    # Iterate over all word_boxes after the previous word_box that
+                    # matched up to the max_gap. Bound at the last word to
+                    # prevent index error
+                    for j in range(
+                        word_box_index,
+                        min(word_box_index + max_gap + 1, len(word_boxes)),
+                    ):
+                        if words[j] == part and word_boxes[j]["page"] == page:
+                            matched_boxes.append(word_boxes[j])
+                            word_box_index = j + 1
+                            break  # Break at match since name_part was found on word
+
+                # Only if all of the parts of the name are found save it
+                if len(matched_boxes) == len(name_parts):
+                    min_x = min(b["x"] for b in matched_boxes)
+                    min_y = min(b["y"] for b in matched_boxes)
+                    max_x = max(b["x"] + b["width"] for b in matched_boxes)
+                    max_y = max(b["y"] + b["height"] for b in matched_boxes)
+
+                    name_boxes.append(
+                        {
+                            "name": name,
+                            "page": matched_boxes[0]["page"],
+                            "x": min_x,
+                            "y": min_y,
+                            "width": max_x - min_x,
+                            "height": max_y - min_y,
+                        }
+                    )
+                    furthest = max(furthest, word_box_index - 1)
+
+            i = furthest + 1
+
+        return name_boxes
+
+_default_bbox = BBoxLocator()
+find_name_bounding_boxes = _default_bbox.find_name_bounding_boxes
