@@ -142,8 +142,12 @@ As part of your submission, fill in the tables below documenting every bug you f
 | # | What You Changed | Why |
 |---|------------------|-----|
 | 1 | Reading/creating files without a context manager | In order to prevent data leakage whenever the file is not closed or if executions on the file fail the context manager will automatically handle the teardown |
-| 2 |                  |     |
-| 3 |                  |     |
+| 2 | Module level methods with aliases | In order not to breake the test suite and allow for named imports (ie. `from app.service.fuzzy_service import fuzzy_match_names`). This serves as a compatibility suite for the implementation and the tests |
+| 3 | Services as classes | For NER, embedding and vector services have an expesive reload of all the resources inside them. OCR, and also vector services have multiple operations that have the same config so this way we don't have to set them each time and pass the parameters around. BBOX and rag services have other dependencies inside, so in case of making changes or swaping those dependencies it is easier. Finally, for fuzzy service in reality this is only to have consistency across services since it is in reaily a single operation. |
+| 4 | Remove model imports across services and centralize in providers.py | Reduce expensive reloads of model resources and centralizing in a single place also allows for quick changes in config in a single place. This also clearly separate between the service (ie. function) and the provider (ie. engine). This way if you want to chagne the functionality of how the service work it is indepedentent from the model, and vice versa. You can change how the model works without having to change how the result is implemented. Also add lru_cache to load a single time and then from memory every later call |
+| 5 | Allow dependency functions in rag and bbox services to be ingested | Since the functions are dependecies for those services, by allowing ingestion we can quickly change to a different function/logic (ie. switching from NER to LLM or different bbox algorithm) without reworking drastically the service. The function needs to mantain the same output contract. |
+| 6 | Create prompts.py to hold prompts | Have a single place of reference for all prompts, and by extracting the prompt from rag_service.py the separation of responsibility is clearer since rag_service is only concerned about executing the rag, not the quality of the prompt it uses |
+| 7 | Extract llm call into class function | Create a small `_call_llm` function outside of `generate_answer` makes the intention of the `generate_answer` function more as an executor rather than configuration. This also allow to modify llm interaction independently in future situations |
 
 (add more rows as needed)
 
