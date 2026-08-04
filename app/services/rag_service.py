@@ -134,6 +134,10 @@ class OpenAIRAG:
                 always passed along.
         """
         settings = get_settings()
+        if not OPENAI_API_KEY:
+            logger.error("OPENAI_API_KEY is not set - /api/ask requests will fail")
+            raise LLMError("OPENAI_API_KEY is not set")
+
         model = settings.LLM_MODEL
         logger.debug("Calling LLM '%s' with prompt of %d chars", model, len(prompt))
         start = time.perf_counter()
