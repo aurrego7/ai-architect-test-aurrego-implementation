@@ -19,7 +19,7 @@ logging.getLogger("httpx").setLevel(logging.INFO)
 logging.getLogger("asyncio").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-if get_settings().OPENAI_API_KEY is None:
+if not get_settings().OPENAI_API_KEY:
     logger.warning("OPENAI_API_KEY is not set - /api/ask requests will fail")
 
 app = FastAPI(title="PDF Name Extractor & RAG API")
