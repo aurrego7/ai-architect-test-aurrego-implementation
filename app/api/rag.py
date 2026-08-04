@@ -39,6 +39,30 @@ def ingest_pdf(
         HTTPException: 400 if the PDF cannot be read, 503 if the vector store
             is unavailable.
     """
+    # Easy check for proper file type before performing any operation
+    if pdf_file.content_type != "application/pdf":
+        logger.warning(
+            "Rejected upload '%s': content type '%s' is not application/pdf",
+            pdf_file.filename,
+            pdf_file.content_type,
+        )
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file type. File must be a PDF.",
+        )
+
+    # More expensive check in the inital files byte to check file type
+    header = pdf_file.file.read(5)
+    pdf_file.file.seek(0)
+    if header != b"%PDF-":
+        logger.warning(
+            "Rejected upload '%s': file header is not a PDF magic number",
+            pdf_file.filename,
+        )
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. File must be a PDF."
+        )
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(pdf_file.file.read())
         tmp.close()
