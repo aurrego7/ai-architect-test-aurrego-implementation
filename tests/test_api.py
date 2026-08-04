@@ -5,7 +5,7 @@ Some tests will FAIL due to bugs in the current implementation.
 """
 
 import json
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 
 class TestExtractEndpoint:
@@ -120,5 +120,9 @@ class TestRAGEndpoints:
 
     def test_health_endpoint_exists(self, app_client):
         """FAILS: No health check endpoint implemented."""
-        response = app_client.get("/health")
+        mock_client = MagicMock()
+        mock_client.get_collections.return_value = MagicMock()
+
+        with patch("app.api.health.create_qdrant_client", return_value=mock_client):
+            response = app_client.get("/health")
         assert response.status_code == 200
