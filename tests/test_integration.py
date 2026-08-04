@@ -7,8 +7,9 @@ to be installed.
 Some tests will FAIL due to bugs in the current implementation.
 """
 
-import os
 import json
+import os
+
 import pytest
 
 SAMPLE_DIR = os.path.join(os.path.dirname(__file__), "..", "sample_pdfs")
@@ -76,8 +77,8 @@ class TestNERWithSamplePDFs:
         """FAILS: Off-by-one means no text extracted from single-page PDF,
         so NER finds nothing. Also ORG filter bug may pollute results.
         """
-        from app.services.ocr_service import extract_text_from_pdf
         from app.services.ner_service import extract_names
+        from app.services.ocr_service import extract_text_from_pdf
 
         text = extract_text_from_pdf(MEMO_PDF)
         names = extract_names(text)
@@ -142,7 +143,7 @@ class TestFuzzyMatchWithSamplePDFs:
         assert len(matches) == 2, f"Expected 2 exact matches, got {len(matches)}"
         for m in matches:
             assert m["score"] >= 0.9, (
-                f"Exact match '{m['matched_name']}' scored {m['score']}, expected >= 0.9"
+                f"Exact match '{m['matched_name']}' scored {m['score']}, expect >= 0.9"
             )
 
     def test_ocr_typos_still_match(self):

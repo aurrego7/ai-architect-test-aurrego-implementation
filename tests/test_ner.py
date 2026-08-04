@@ -4,8 +4,7 @@ These tests verify named entity extraction.
 Some tests will FAIL due to bugs in the current implementation.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 
 class TestExtractNames:

@@ -4,7 +4,6 @@ These tests verify name-to-bounding-box matching.
 Some tests will FAIL due to bugs in the current implementation.
 """
 
-import pytest
 from unittest.mock import patch
 
 
@@ -22,9 +21,7 @@ class TestFindNameBoundingBoxes:
         ]
 
         with (
-            patch(
-                "app.services.bbox_service.extract_names", return_value=mock_names
-            ),
+            patch("app.services.bbox_service.extract_names", return_value=mock_names),
             patch(
                 "app.services.bbox_service.get_word_bounding_boxes",
                 return_value=mock_word_boxes,
@@ -34,9 +31,7 @@ class TestFindNameBoundingBoxes:
 
             result = find_name_bounding_boxes("test.pdf", "dummy text")
 
-        assert len(result) == 1, (
-            "Should match 'John' to 'JOHN' case-insensitively"
-        )
+        assert len(result) == 1, "Should match 'John' to 'JOHN' case-insensitively"
         assert result[0]["name"] == "John Smith"
 
     def test_merges_multiword_name_boxes(self, sample_word_boxes):
@@ -44,9 +39,7 @@ class TestFindNameBoundingBoxes:
         mock_names = ["John Smith"]
 
         with (
-            patch(
-                "app.services.bbox_service.extract_names", return_value=mock_names
-            ),
+            patch("app.services.bbox_service.extract_names", return_value=mock_names),
             patch(
                 "app.services.bbox_service.get_word_bounding_boxes",
                 return_value=sample_word_boxes,
@@ -76,9 +69,7 @@ class TestFindNameBoundingBoxes:
         ]
 
         with (
-            patch(
-                "app.services.bbox_service.extract_names", return_value=mock_names
-            ),
+            patch("app.services.bbox_service.extract_names", return_value=mock_names),
             patch(
                 "app.services.bbox_service.get_word_bounding_boxes",
                 return_value=mock_word_boxes,
@@ -92,3 +83,5 @@ class TestFindNameBoundingBoxes:
         # This test documents the bug — candidate should decide if
         # returning all occurrences is the correct behavior.
         assert result[0]["page"] == 0
+        assert result[1]["page"] == 1
+        assert len(result) == 2

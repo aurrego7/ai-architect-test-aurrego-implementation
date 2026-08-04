@@ -1,6 +1,8 @@
 # ML-TechTest
 
 > **Start here: read [TASK.md](TASK.md) for full instructions.** The repo contains a partially implemented application with bugs and missing features. Your job is to fix, refactor, and complete it.
+>
+> **To build, run and test the finished application, see [INFO.md](INFO.md#running--testing-the-application).**
 
 ## Task Description:
 The task is to build a system that can extract names and last names from a scanned

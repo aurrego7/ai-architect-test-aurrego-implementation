@@ -5,6 +5,7 @@ Uses only PIL (Pillow) — no extra dependencies needed.
 """
 
 import os
+
 from PIL import Image, ImageDraw, ImageFont
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "sample_pdfs")
@@ -292,27 +293,45 @@ def main():
     print("\n--- Expected Names ---")
     print("\ncompany_memo.pdf:")
     for name in [
-        "Margaret Thompson", "Robert Chen", "Sarah Williams",
-        "James Anderson", "Maria Garcia", "David Nakamura",
+        "Margaret Thompson",
+        "Robert Chen",
+        "Sarah Williams",
+        "James Anderson",
+        "Maria Garcia",
+        "David Nakamura",
         "Patricia Okonkwo",
     ]:
         print(f"  - {name}")
 
     print("\nmeeting_minutes.pdf:")
     for name in [
-        "Richard Hernandez", "Elizabeth Park", "Thomas Muller",
-        "Aisha Patel", "Kevin O'Brien", "Jennifer Liu",
-        "Carlos Mendoza", "Yuki Tanaka", "Alexander Popov",
+        "Richard Hernandez",
+        "Elizabeth Park",
+        "Thomas Muller",
+        "Aisha Patel",
+        "Kevin O'Brien",
+        "Jennifer Liu",
+        "Carlos Mendoza",
+        "Yuki Tanaka",
+        "Alexander Popov",
         "Catherine Dubois",
     ]:
         print(f"  - {name}")
 
     print("\nresearch_report.pdf:")
     for name in [
-        "Olivia Chambers", "Benjamin Foster", "Priya Sharma",
-        "Lucas Zimmermann", "Fatima Al-Rashidi", "Christopher Wong",
-        "Anna Kowalski", "Michael O'Sullivan", "Elena Volkov",
-        "Raj Krishnamurthy", "Hans Weber", "James Chen",
+        "Olivia Chambers",
+        "Benjamin Foster",
+        "Priya Sharma",
+        "Lucas Zimmermann",
+        "Fatima Al-Rashidi",
+        "Christopher Wong",
+        "Anna Kowalski",
+        "Michael O'Sullivan",
+        "Elena Volkov",
+        "Raj Krishnamurthy",
+        "Hans Weber",
+        "James Chen",
         "Margaret Thompson",
     ]:
         print(f"  - {name}")

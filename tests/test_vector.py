@@ -4,8 +4,8 @@ These tests verify Qdrant integration.
 Some tests will FAIL due to bugs in the current implementation.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import MagicMock, patch
+
 from qdrant_client.models import Distance
 
 
@@ -65,10 +65,16 @@ class TestStoreDocumentChunks:
 
         # Extract point IDs from both calls
         first_ids = [
-            p.id for p in first_call_points.kwargs.get("points", first_call_points[1].get("points", []))
+            p.id
+            for p in first_call_points.kwargs.get(
+                "points", first_call_points[1].get("points", [])
+            )
         ]
         second_ids = [
-            p.id for p in second_call_points.kwargs.get("points", second_call_points[1].get("points", []))
+            p.id
+            for p in second_call_points.kwargs.get(
+                "points", second_call_points[1].get("points", [])
+            )
         ]
 
         # IDs should NOT overlap

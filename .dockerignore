@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# Environment Variable
+.env
+.env.*
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+
+# Testing
+.pytest_cache/
+tests/
+conftest.py
+
+# Docker and IDEs
+.dockerignore
+Dockerfile
+docker-compose.yml
+.vscode/
+
+# General
+README.md
+TASK.md
+.DS_Store
+.ruff_cache/
+sample_pdfs/

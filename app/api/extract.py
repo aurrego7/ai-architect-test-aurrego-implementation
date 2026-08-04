@@ -1,38 +1,113 @@
+"""HTTP endpoints for name extraction from uploaded PDFs."""
+
+import json
+import logging
 import os
 import tempfile
+from typing import Any
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from pydantic import ValidationError
 
-from app.models.schemas import ExtractionResponse
-from app.services.ocr_service import extract_text_from_pdf
+from app.core.errors import OCRError
+from app.models.schemas import ExtractionResponse, NamePair
 from app.services.bbox_service import find_name_bounding_boxes
 from app.services.fuzzy_service import fuzzy_match_names
+from app.services.ocr_service import extract_text_from_pdf
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
 @router.post("/extract", response_model=ExtractionResponse)
 def extract_names_from_pdf(
-    pdf_file: UploadFile = File(...),
+    pdf_file: UploadFile = File(...),  # noqa: B008 FastAPI format
     names: str = Form(...),
-):
-    """Extract names from PDF and perform fuzzy matching."""
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    tmp.write(pdf_file.file.read())
-    tmp.close()
+) -> dict[str, Any]:
+    """Extract names from PDF and perform fuzzy matching.
+
+    OCRs the upload, locates every recognised person name on the page, and
+    scores the caller's names against what was found. The temporary file is
+    always removed, including on failure.
+
+    Args:
+        pdf_file: Uploaded document. Must declare the ``application/pdf``
+            content type and begin with the PDF magic number.
+        names: JSON array of ``{"first_name": ..., "last_name": ...}``
+            objects to search for.
+
+    Returns:
+        A mapping matching :class:`~app.models.schemas.ExtractionResponse`,
+        with ``extracted_names`` (one entry per occurrence, each carrying a
+        bounding box) and ``fuzzy_matches``.
+
+    Raises:
+        HTTPException: 400 if the upload is not a PDF, if ``names`` is not a
+            valid JSON array of name objects, or if the PDF cannot be read.
+    """
+    # Easy check for proper file type before performing any operation
+    if pdf_file.content_type != "application/pdf":
+        logger.warning(
+            "Rejected upload '%s': content type '%s' is not application/pdf",
+            pdf_file.filename,
+            pdf_file.content_type,
+        )
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file type. File must be a PDF.",
+        )
+
+    # More expensive check in the inital files byte to check file type
+    header = pdf_file.file.read(5)
+    pdf_file.file.seek(0)
+    if header != b"%PDF-":
+        logger.warning(
+            "Rejected upload '%s': file header is not a PDF magic number",
+            pdf_file.filename,
+        )
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. File must be a PDF."
+        )
+
+    # Validate the names payload before doing any expensive OCR work
+    # JSONDecodeError: not valid JSON
+    # TypeError: an item is not a dict
+    # ValidationError: an item is missing/has wrong fields
+    try:
+        raw_names = json.loads(names)
+        query_names = [NamePair(**item).model_dump() for item in raw_names]
+    except (json.JSONDecodeError, TypeError, ValidationError) as exc:
+        logger.warning("Rejected extraction request: invalid names payload")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid names format. Expected a JSON array of "
+            '{"first_name": ..., "last_name": ...} objects.',
+        ) from exc
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        tmp.write(pdf_file.file.read())
+        tmp.close()
 
     try:
+        logger.info(
+            "Extraction started for '%s' (%d bytes)",
+            pdf_file.filename,
+            os.path.getsize(tmp.name),
+        )
         text = extract_text_from_pdf(tmp.name)
 
         name_boxes = find_name_bounding_boxes(tmp.name, text)
 
-        import json
-
-        query_names = json.loads(names)
-
         extracted_name_strings = [nb["name"] for nb in name_boxes]
         matches = fuzzy_match_names(extracted_name_strings, query_names)
 
+        logger.info(
+            "Extraction finished for '%s': %d name occurrences, %d fuzzy matches",
+            pdf_file.filename,
+            len(name_boxes),
+            len(matches),
+        )
         return {
             "extracted_names": [
                 {
@@ -42,11 +117,16 @@ def extract_names_from_pdf(
                         "y": nb["y"],
                         "width": nb["width"],
                         "height": nb["height"],
+                        "page_number": nb["page"],
                     },
                 }
                 for nb in name_boxes
             ],
             "fuzzy_matches": matches,
         }
+    except OCRError as exc:
+        raise HTTPException(
+            status_code=400, detail="Could not process the PDF file."
+        ) from exc
     finally:
         os.unlink(tmp.name)

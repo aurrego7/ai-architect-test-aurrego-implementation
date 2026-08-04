@@ -4,10 +4,11 @@ These tests verify text extraction from PDF documents.
 Some tests will FAIL due to bugs in the current implementation.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
-from PIL import Image
 import io
+from unittest.mock import MagicMock, patch
+
+import pytest
+from PIL import Image
 
 
 class TestExtractTextFromPDF:
@@ -20,8 +21,12 @@ class TestExtractTextFromPDF:
         mock_doc = MagicMock()
         mock_doc.__len__ = MagicMock(return_value=3)
 
+        # mock_doc.__enter__ returns a brand new mock, not mock_doc
+        # this causes with statements to break
+        mock_doc.__enter__.return_value = mock_doc
+
         mock_pages = []
-        for i in range(3):
+        for _ in range(3):
             page = MagicMock()
             pix = MagicMock()
             # Create a minimal valid PNG
@@ -55,6 +60,10 @@ class TestExtractTextFromPDF:
         mock_doc = MagicMock()
         mock_doc.__len__ = MagicMock(return_value=0)
 
+        # mock_doc.__enter__ returns a brand new mock, not mock_doc
+        # this causes with statements to break
+        mock_doc.__enter__.return_value = mock_doc
+
         with patch("app.services.ocr_service.fitz.open", return_value=mock_doc):
             from app.services.ocr_service import extract_text_from_pdf
 
@@ -68,6 +77,10 @@ class TestExtractTextFromPDF:
         """
         mock_doc = MagicMock()
         mock_doc.__len__ = MagicMock(return_value=0)
+
+        # mock_doc.__enter__ returns a brand new mock, not mock_doc
+        # this causes with statements to break
+        mock_doc.__enter__.return_value = mock_doc
 
         with patch("app.services.ocr_service.fitz.open", return_value=mock_doc):
             from app.services.ocr_service import extract_text_from_pdf
@@ -86,6 +99,10 @@ class TestGetWordBoundingBoxes:
         """
         mock_doc = MagicMock()
         mock_doc.__len__ = MagicMock(return_value=1)
+
+        # mock_doc.__enter__ returns a brand new mock, not mock_doc
+        # this causes with statements to break
+        mock_doc.__enter__.return_value = mock_doc
 
         page = MagicMock()
         # PDF page is 612x792 points (8.5x11 inches at 72 DPI)
@@ -127,4 +144,8 @@ class TestGetWordBoundingBoxes:
         # Coordinates should be converted: x * (72/150)
         assert results[0]["x"] == pytest.approx(72.0, abs=1.0), (
             "X coordinate should be in PDF space (72 DPI), not OCR space (150 DPI)"
+        )
+        # top = 300 px at 150 DPI is 2 inches = 144 PDF points
+        assert results[0]["y"] == pytest.approx(144.0, abs=1.0), (
+            "Y coordinate should be in PDF space (72 DPI), not OCR space (150 DPI)"
         )
